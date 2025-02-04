@@ -32,8 +32,13 @@ Password manager algorithm
 
 - add password
     1. user enters website name, username, and password to be stored
-    2. encrypt password with the initialized key currently open in session
-    3. save website, username, and encrypted password in passwords json file
+    2. check if the website exists in password json file 
+        - if it does not exists: 
+            1. encrypt password with the initialized key currently open in session
+            2. save website, username, and encrypted password in passwords json file
+        - if it does exist:
+            1. print warning message that there is a password already stored for the website
+    
 
 - get password
     1. user enters the website name for the password
@@ -65,41 +70,68 @@ Password manager algorithm
 '''
 
 def generate_key():
+    # generating a key for the first time
     key = Fernet.generate_key()
     return key
 
 def initialize_key(key):
+    # initializing key as cipher
     f = Fernet(key)
     return f 
 
-def encrypt_pass(password, key):
+def encrypt_password(password, key) -> str:
+    # encrypting password using initialized cipher and decoding encrypted message to plaintext
     enc_message = key.encrypt(password.encode()).decode()
     return enc_message
 
-def decrypt_pass(password, key):
+def decrypt_password(password, key) -> str:
+    # decrypting password using initialized cipher and decoding decrypted message to plaintext
     dec_message = key.decrypt(password).decode()
     return dec_message
 
-#def add_password(username, password)
+def get_password_file() -> dict:
+     # checking if passwords json file already exists
+    # if file does not exist, initialize empty password dictionary
+    if not os.path.exists('passwords.json'):
+        passwords = {}
+    # if file already exists, open json file and load passwords dictionary
+    else:
+        try:
+            with open('passwords.json' 'r') as file:
+                passwords = json.load(file)
+        # exception for if json file not found
+        except json.JSONDecodeError:
+            passwords = {}
+    return passwords
 
-key = generate_key()
-print("The key is: ")
-print(key)
+def add_password(website, username, password, key, passwords):
+    '''
+    - function adds a password to a dictionary of managed passwords
+    - dictionary format passwords[website] = {'username': username, 'password': encrypted_password}
+    '''
 
-key = initialize_key(key)
-print("Initialized key: ")
-print(key)
+    # checking if website entry already exists in password keys
+    # if entry does not exist
+    if website not in passwords.keys():
+        # encrypting password
+        enc_password = encrypt_password(password, key)
+        # storing username and password to dictionary with lowercased website as key
+        passwords[website.to_lower()] = {'username': username, 'password': enc_password}
+        print('Saved password successfully')
+    # if entry already exists in dictionary print warning message
+    else:
+        print('A password already exists for this website')
 
-message = 'suck my dick'
-print('Message: ' + message)
+def get_password(website, key, passwords):
+    if website in passwords.keys():
+        enc_password = passwords[website.to_lower()]['password']
+        dec_password = decrypt_password(enc_password, key)
+        pyperclip.copy(dec_password)
+        print('Password saved to clipboard')
+    else:
+        print('A password does not exist for the given website')
 
-enc_message = encrypt_pass(message, key)
-print('Encrypted message: ')
-print(enc_message)
 
-dec_message = decrypt_pass(enc_message, key)
-print('Decrypted message: ')
-print(dec_message)
 '''
 app = Flask(__name__)
 
