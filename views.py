@@ -104,13 +104,11 @@ class SignUpView(tk.Frame):
         self.passw_entry = tk.Entry(self, textvariable=self.password, show='*').grid(row=3, column=1, padx=(0,20), sticky='ew')
 
         # terms and conditions checkbox
-        self.agreed = False
+        self.agreed = tk.BooleanVar()
         self.checkbox = tk.Checkbutton(
             self,   
             text='Agree to Terms and Conditions', 
-            variable=self.agreed,
-            onvalue=True,
-            offvalue=False).grid(row=4, column=1, padx=0, pady=10, sticky='w')
+            variable=self.agreed).grid(row=4, column=1, padx=0, pady=10, sticky='w')
         
         # sign up button
         self.signup_btn = tk.Button(self, text='Sign Up').grid(row=5, column=1, padx=0, pady=10, sticky='w')

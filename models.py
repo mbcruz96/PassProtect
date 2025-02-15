@@ -8,7 +8,7 @@ class BaseModel:
         try:
             self.event_listeners[event].append(callback)
         except KeyError:
-            self.event_listeners[event] = callback
+            self.event_listeners[event] = [callback,]
 
     def trigger_event(self, event):
         if event not in self.event_listeners.keys():
@@ -25,41 +25,52 @@ class AuthModel(BaseModel):
     def __init__(self):
         super().__init__()
         self.logged_in = False
+        self.current_user_fullname = None
         self.current_user = None
-        self.users = pm.get_json_file('master_passwords.json')
+        self.current_id = 0
+        self.users = pm.get_json('master_passwords.json')
+        self.key = None
 
     def login(self, username, password):
         logged_in = pm.login(username, password)
         if logged_in is True:
             self.logged_in = True
-            self.current_user = self.users[username]['full_name']
+            self.current_user_fullname = self.users[username]['full_name']
+            self.current_user = username
+            self.current_id = self.users[username]['user_id']
+            self.key = pm.get_key(self.users[username]['key_file'])
             self.trigger_event('on_login')
         else:
             self.logged_in = False
+            self.current_user_fullname = None
             self.current_user = None
         return logged_in
 
     def logout(self):
         self.logged_in = False
+        self.current_user_fullname = None
         self.current_user = None
         self.trigger_event('on_logout')
 
     def signup(self, name, username, password):
         signed_up = pm.signup(name, username, password)
+
         if signed_up is True:
-            self.users = pm.get_json_file('master_passwords.json')
+            self.users = pm.get_json('master_passwords.json')
             self.logged_in = True
-            self.current_user = self.users[username]['full_name']
-            self.trigger_event('on_login')
+            self.current_user_fullname = name
+            self.current_user = username
+            self.current_id = self.users[username]['user_id']
+            self.key = pm.get_key(self.users[username]['key_file'])
+            self.trigger_event('on_signup')
             return True
         else:
             return False
 
-class PasswordModel(BaseModel):
+class PasswordModel(AuthModel):
     def __init__(self):
         super().__init__()
-        self.passwords = pm.get_json_file('passwords.json')
-        self.key = pm.get_key_file()
+        self.passwords = pm.get_json('passwords.json')
         self.num_passwords = len(self.passwords)
 
     def add_password(self, website, username, password):

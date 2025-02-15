@@ -14,12 +14,20 @@ class Controller:
 
         self.model.auth_model.add_listener('on_login', self.on_login)
         self.model.auth_model.add_listener('on_logout', self.on_logout)
-    
-    def on_login(self):
+        self.model.auth_model.add_listener('to_signup', self.to_signup)
+        self.model.auth_model.add_listener('on_signup', self.on_signup)
+
+    def on_login(self, data):
         self.view.switch('home')
 
-    def on_logout(self):
+    def on_logout(self, data):
         self.view.switch('login')
+
+    def to_signup(self, data):
+        self.view.switch('signup')
+    
+    def on_signup(self, data):
+        self.view.switch('home')
 
     def start(self):
         self.view.switch('login')
@@ -41,15 +49,15 @@ class LoginController:
         self.view.switch('signup')
 
     def login(self):
+        self.frame.children['!label5'].grid_forget()
+        self.frame.children['!label6'].grid_forget()
         username = self.frame.username.get()
         password = self.frame.password.get()
         login = self.model.auth_model.login(username, password)
-        if login is True:
-            self.view.switch('home')
-        elif login is False:
-            self.frame.children['!label5'].grid(row=4, column=1, padx=0, pady=10, sticky='w')
-        else:
-            self.frame.children['!label6'].grid(row=4, column=1, padx=0, pady=10, sticky='w')
+        if login is False:
+            self.frame.children['!label5'].grid(row=6, column=1, padx=0, pady=10, sticky='w')
+        if login is None:
+            self.frame.children['!label6'].grid(row=6, column=1, padx=0, pady=10, sticky='w')
 
 class SignupController:
     def __init__(self, model:models.Model, view:views.View):
@@ -63,16 +71,16 @@ class SignupController:
         self.frame.children['!button'].config(command=self.signup)
     
     def signup(self):
+        self.frame.children['!label5'].grid_forget()
+        self.frame.children['!label6'].grid_forget()
         name = self.frame.fullname.get()
         username = self.frame.username.get()
         password = self.frame.password.get()
-        agreed = self.frame.agreed
+        agreed = self.frame.agreed.get()
 
-        if agreed:
+        if agreed is True:
             signup = self.model.auth_model.signup(name, username, password)
-            if signup is True:
-                self.view.switch('home')
-            else:
+            if signup is False:
                 self.frame.children['!label5'].grid(row=6, column=1, padx=0, pady=10, sticky='w')
         else:
             self.frame.children['!label6'].grid(row=6, column=1, padx=0, pady=10, sticky='w')
