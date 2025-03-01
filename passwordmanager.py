@@ -114,19 +114,6 @@ def get_key(file_path):
     Function checks if a key encryption file exists, if so it returns the key stored 
     in the file, if not, it generates a new key and stores it in the file key.key
     '''
-
-    #  *** FINISH HOW TO INCORPORATE USER_ID NUMBER AND KEY FILE
-    
-    # checking if the key file doesn't exist
-    '''
-    if not os.path.exists(file_path):
-        # generating key
-        key = generate_key()
-        # writing key to key file
-        with open(file_path, 'w') as key_file:
-            key_file.write(key)
-    '''
-    # if key file already exists block
     try:
         # reading key from key.key file
         with open(file_path, 'rb') as key_file:
@@ -137,29 +124,34 @@ def get_key(file_path):
         print('Key file can not be found')
     # initializing and returning encryption cipher
     
-
-def add_password(website, username, password, key, passwords):
+def add_password(website, username, password, user, key, passwords):
     '''
     - function adds a password to a dictionary of managed passwords
-    - dictionary format passwords[website] = {'username': username, 'password': encrypted_password}
+    - dictionary format passwords[user][website] = {'username': username, 'password': encrypted_password}
     '''
-    website = website.to_lower().strip()
+    website = website.lower().strip()
+    # checking if user has an entry in the passwords file or not
+    if user not in passwords.keys():
+        passwords[user] = {}
+
     # checking if website entry already exists in password keys
-    # if entry does not exist
-    if website not in passwords[username].keys():
+    # if entry already exists in dictionary print warning message
+    if website in passwords[user].keys():
+        return None
+    # if entry does not exist    
+    else:
         # encrypting password
         enc_password = encrypt_password(password, key)
         # storing username and password to dictionary with lowercased website as key
-        data = {website : enc_password}
-        passwords[username].update(data)
-        print('Saved password successfully')
-    # if entry already exists in dictionary print warning message
-    else:
-        print('A password already exists for this website')
+        entry = {
+            'username' : username,
+            'password' : enc_password,
+        }
+        passwords[user][website] = entry
     return passwords
 
 def get_password(username, website, key, passwords):
-    website = website.to_lower().strip()
+    website = website.lower().strip()
     if website in passwords[username].keys():
         enc_password = passwords[username][website]
         dec_password = decrypt_password(enc_password, key)
@@ -172,7 +164,7 @@ def login(username, password):
     '''
     Function accepts the username and password and authenticates a login attempt.
     '''
-    stored_users = get_json('master_passwords')
+    stored_users = get_json('master_passwords.json')
     if len(stored_users) == 0:
         return None
     else:
@@ -192,7 +184,7 @@ def signup(fullname, username, password):
     otherwise. 
     '''
 
-    stored_users = get_json('master_passwords') # getting currently stored users
+    stored_users = get_json('master_passwords.json') # getting currently stored users
 
     # checking if the username is unique
     if username not in stored_users.keys():
