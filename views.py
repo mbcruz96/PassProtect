@@ -1,6 +1,9 @@
 import tkinter as tk
 
 class EventListener:
+    '''
+    Class to handle event listeners and trigger events
+    '''
     event_listeners = {}
   
     def add_listener(event, callback):
@@ -35,40 +38,15 @@ class View:
         super().__init__()
         self.root = Root()
         self.current_view = None
-        '''
-        self.login_view = LoginView()
-        self.signup_view = SignUpView()
-        self.home_view = HomeView()
-        '''
         self.frames = {
             'login' : LoginView,
             'signup' : SignUpView,
             'home' : HomeView,
             'add' : AddView,
         }
-        '''
-        self.frames = {}
-         
-        self.add_frame(LoginView, 'login')
-        self.add_frame(SignUpView, 'signup')
-        self.add_frame(HomeView, 'home')
-        self.add_frame(AddView, 'add')
-        '''
-        # NEED TO DYNAMICALLY ADD FRAMES SO THAT THE PASSWORDS CAN BE DISPLAYED 
-    '''    
-    def add_frame(self, Frame, name):
-        self.frames[name] = Frame(self.root)
-        self.frames[name].grid(row=0, column=0, sticky="nsew")
-    '''
+
     def switch(self, view):
-        '''
-        frame = self.frames[view]
-        frame.tkraise()
-        '''
-        #if args is None:
         frame = self.frames[view](self.root)
-        #else:
-            #frame = self.frames[view](self.root, args)
         if self.current_view is not None:
             self.current_view.destroy()
         self.current_view = frame

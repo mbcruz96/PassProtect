@@ -16,7 +16,7 @@ class Controller:
         self.home_controller = HomeController(model, view)
         self.add_controller = AddController(model, view)
 
-        # adding all event listeners
+        # creating event listeners
         EventListener.add_listener('on_login', self.on_login)
         EventListener.add_listener('on_logout', self.on_logout)
         EventListener.add_listener('to_signup', self.to_signup)
@@ -25,6 +25,7 @@ class Controller:
         EventListener.add_listener('add_password', self.add_password)
         EventListener.add_listener('on_back', self.on_back)
 
+    # binding event listeners to their respective functions
     def on_login(self, frame):
         self.frame = self.login_controller.login(frame)
 
@@ -46,6 +47,7 @@ class Controller:
     def on_back(self, frame):
         self. frame = self.add_controller.back(frame)
 
+    # starting the application
     def start(self):
         self.frame = self.view.switch('login')
         self.view.start_loop()
@@ -55,7 +57,6 @@ class LoginController:
     def __init__(self, model, view):
         self.model = model
         self.view = view
-        #self.frame = view.frames['login']
     
     def signup(self, frame):
         new_frame = self.view.switch('signup')
@@ -86,7 +87,6 @@ class SignupController:
     def __init__(self, model:models.Model, view:views.View):
         self.model = model
         self.view = view
-        #self.frame = view.frames['signup']
       
     def signup(self, frame):
         print(frame.children)
@@ -116,7 +116,6 @@ class HomeController:
     def __init__(self, model, view):
         self.model = model
         self.view = view
-        #self.frame = self.view.frames['home']
       
     def select(self, frame):
         # FINISH THE CALLBACK FUNCTION
@@ -136,7 +135,6 @@ class AddController:
     def __init__(self, model, view):
         self.model = model
         self.view = view
-        #self.frame = self.view.frames['add']
      
     def add(self, frame):
         frame.children['!label5'].grid_forget()

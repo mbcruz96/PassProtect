@@ -1,11 +1,19 @@
 import passwordmanager as pm
 
+# Base model
 class Model:
+    '''
+    class to handle the data of the application
+    '''
     def __init__(self):
         self.auth_model = AuthModel()
         self.password_model = PasswordModel()
 
+# Authorization model
 class AuthModel():
+    '''
+    class to handle the authentication of the application
+    '''
     logged_in = False
     current_user_fullname = None
     current_user = None
@@ -56,7 +64,11 @@ class AuthModel():
         else:
             return False
 
+# Password model
 class PasswordModel(AuthModel):
+    '''
+    class to handle the password data of the application
+    '''
     def __init__(self):
         super().__init__()
         self.passwords = pm.get_json('passwords.json')
