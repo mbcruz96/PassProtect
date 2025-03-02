@@ -74,5 +74,8 @@ class PasswordModel(AuthModel):
     def get_password(self, website):
         pm.get_password(website, self.key, self.passwords)
 
+    def get_websites(self):
+        return pm.get_websites(AuthModel.current_user, self.passwords)
+
 
 

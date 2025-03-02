@@ -160,6 +160,13 @@ def get_password(username, website, key, passwords):
     else:
         print('A password does not exist for the given website')
 
+def get_websites(username, passwords):
+    websites = []
+    if username in passwords.keys():
+        for website in passwords[username].keys():
+            websites.append(website)
+    return websites
+
 def login(username, password):
     '''
     Function accepts the username and password and authenticates a login attempt.

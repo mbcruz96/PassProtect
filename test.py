@@ -3,7 +3,9 @@ from views import SignUpView
 import tkinter as tk
 import passwordmanager as pm
 from views import EventListener
-#view = views.View()
+view = views.View()
+frame = view.switch('signup', None)
+print(frame.children)
 #label = tk.Label()
 #frame = view.frames['signup']
 #for name, widget in frame.children.items():
@@ -18,5 +20,5 @@ from views import EventListener
 #key = pm.get_key(users['a']['key_file'])
 #print(type(key))
 
-EventListener.trigger_event('on_signup', None, None)
-event='to_signup', frame=self, args=[]
+#EventListener.trigger_event('on_signup', None, None)
+#event='to_signup', frame=self, args=[]

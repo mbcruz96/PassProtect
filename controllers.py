@@ -25,29 +25,29 @@ class Controller:
         EventListener.add_listener('add_password', self.add_password)
         EventListener.add_listener('on_back', self.on_back)
 
-    def on_login(self, frame, args):
-        self.login_controller.login(frame, args)
+    def on_login(self, frame):
+        self.frame = self.login_controller.login(frame)
 
-    def on_logout(self, frame, args):
-        self.home_controller.logout(frame, args)
+    def on_logout(self, frame):
+        self.frame = self.home_controller.logout(frame)
 
-    def to_signup(self, frame, args):
-        self.login_controller.signup(frame, args)
+    def to_signup(self, frame):
+        self.frame = self.login_controller.signup(frame)
     
-    def on_signup(self, frame, args):
-        self.signup_controller.signup(frame, args)
+    def on_signup(self, frame):
+        self.frame = self.signup_controller.signup(frame)
 
-    def to_add(self, frame, args):
-        self.home_controller.add(frame, args)
+    def to_add(self, frame):
+        self.frame = self.home_controller.add(frame)
 
-    def add_password(self, frame, args):
-        self.add_controller.add(frame, args)
+    def add_password(self, frame):
+        self.frame = self.add_controller.add(frame)
 
-    def on_back(self, frame, args):
-        self.add_controller.back(frame, args)
+    def on_back(self, frame):
+        self. frame = self.add_controller.back(frame)
 
     def start(self):
-        self.view.switch('login')
+        self.frame = self.view.switch('login')
         self.view.start_loop()
 
 # controller for login view
@@ -57,10 +57,11 @@ class LoginController:
         self.view = view
         #self.frame = view.frames['login']
     
-    def signup(self, frame, args):
-        self.view.switch('signup')
-
-    def login(self, frame, args):
+    def signup(self, frame):
+        new_frame = self.view.switch('signup')
+        return new_frame
+    
+    def login(self, frame):
         frame.children['!label5'].grid_forget()
         frame.children['!label6'].grid_forget()
         username = frame.username.get()
@@ -73,7 +74,12 @@ class LoginController:
         else:
            frame.children['!entry'].delete(0, tk.END)
            frame.children['!entry2'].delete(0, tk.END)
-           self.view.switch('home')
+           websites = self.model.password_model.get_websites()
+           new_frame = self.view.switch('home')
+           for website in websites:
+               new_frame.children['!listbox'].insert(tk.END, website)
+           return new_frame
+        return frame
 
 # controller for signup view
 class SignupController:
@@ -82,7 +88,8 @@ class SignupController:
         self.view = view
         #self.frame = view.frames['signup']
       
-    def signup(self, frame, args):
+    def signup(self, frame):
+        print(frame.children)
         frame.children['!label5'].grid_forget()
         frame.children['!label6'].grid_forget()
         name = frame.fullname.get()
@@ -93,12 +100,17 @@ class SignupController:
         if agreed is True:
             signup = self.model.auth_model.signup(name, username, password)
             if signup is False:
-                self.frame.children['!label5'].grid(row=6, column=1, padx=0, pady=10, sticky='w')
+                frame.children['!label5'].grid(row=6, column=1, padx=0, pady=10, sticky='w')
             else:
-                self.view.switch('home')
+                websites = self.model.password_model.get_websites()
+                new_frame = self.view.switch('home')
+                for website in websites:
+                    new_frame.children['!listbox'].insert(tk.END, website)
+                return new_frame
         else:
-            self.frame.children['!label6'].grid(row=6, column=1, padx=0, pady=10, sticky='w')
-
+            frame.children['!label6'].grid(row=6, column=1, padx=0, pady=10, sticky='w')
+        return frame
+    
 # controller for home view
 class HomeController:
     def __init__(self, model, view):
@@ -106,17 +118,19 @@ class HomeController:
         self.view = view
         #self.frame = self.view.frames['home']
       
-    def select(self, frame, args):
+    def select(self, frame):
         # FINISH THE CALLBACK FUNCTION
         index = frame.children['!listbox'].curselection()
         item = frame.children['!listbox'].get(index[0])
 
-    def add(self, frame, args):
-        self.view.switch('add')
-
-    def logout(self, frame, args):
-        self.view.switch('login')
-
+    def add(self, frame):
+        new_frame = self.view.switch('add')
+        return new_frame
+    
+    def logout(self, frame):
+        new_frame = self.view.switch('login')
+        return new_frame
+    
 # controller for add password view
 class AddController:
     def __init__(self, model, view):
@@ -124,7 +138,7 @@ class AddController:
         self.view = view
         #self.frame = self.view.frames['add']
      
-    def add(self, frame, args):
+    def add(self, frame):
         frame.children['!label5'].grid_forget()
         username = frame.username.get()
         password = frame.password.get()
@@ -137,10 +151,19 @@ class AddController:
             frame.children['!entry'].delete(0, tk.END)
             frame.children['!entry2'].delete(0, tk.END)
             frame.children['!entry3'].delete(0, tk.END)
-            self.view.switch('home')
+            websites = self.model.password_model.get_websites()
+            new_frame = self.view.switch('home')
+            for website in websites:
+               new_frame.children['!listbox'].insert(tk.END, website)
+            return new_frame
+        return frame
 
-    def back(self, frame, args):
+    def back(self, frame):
         frame.children['!entry'].delete(0, tk.END)
         frame.children['!entry2'].delete(0, tk.END)
         frame.children['!entry3'].delete(0, tk.END)
-        self.view.switch('home')
+        websites = self.model.password_model.get_websites()
+        new_frame = self.view.switch('home')
+        for website in websites:
+            new_frame.children['!listbox'].insert(tk.END, website)
+        return new_frame

@@ -9,11 +9,11 @@ class EventListener:
         except KeyError:
             EventListener.event_listeners[event] = [callback,]
 
-    def trigger_event(event, frame, args):
+    def trigger_event(event, frame):
         if event not in EventListener.event_listeners.keys():
             return
         for callback in EventListener.event_listeners[event]:
-            callback(frame, args)
+            callback(frame)
 
 class Root(tk.Tk):
     def __init__(self):
@@ -30,7 +30,7 @@ class Root(tk.Tk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-class View(EventListener):
+class View:
     def __init__(self):
         super().__init__()
         self.root = Root()
@@ -65,9 +65,12 @@ class View(EventListener):
         frame = self.frames[view]
         frame.tkraise()
         '''
+        #if args is None:
         frame = self.frames[view](self.root)
+        #else:
+            #frame = self.frames[view](self.root, args)
         if self.current_view is not None:
-            self.root.destroy()
+            self.current_view.destroy()
         self.current_view = frame
         self.current_view.grid(row=0, column=0, sticky='nsew')
         return frame
@@ -75,7 +78,7 @@ class View(EventListener):
     def start_loop(self):
         self.root.mainloop()
 
-class LoginView(tk.Frame, EventListener):
+class LoginView(tk.Frame):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -95,17 +98,30 @@ class LoginView(tk.Frame, EventListener):
         self.passw_entry = tk.Entry(self, textvariable=self.password, show='*').grid(row=2, column=1, padx=(0,20), sticky='ew')
 
         # signup button
-        self.submit_btn = tk.Button(self, text="Submit", command=EventListener.trigger_event('on_submit', self, self.username.get(), self.password.get()))
-        self.submit_btn.grid(row=3, column=1, padx=0, pady=10, sticky='w')
+        self.submit_btn = tk.Button(
+            self, 
+            text="Submit", 
+            command=self.on_login
+        ).grid(row=3, column=1, padx=0, pady=10, sticky='w')
+        
         self.signup_label = tk.Label(self, text="Don't have an account?").grid(row=4, column=1, sticky='w')
-        self.signup_btn = tk.Button(self, text="Sign Up", command=EventListener.trigger_event('to_signup', self))
-        self.signup_btn.grid(row=5, column=1, padx=0, pady=10, sticky='w')
+        self.signup_btn = tk.Button(
+            self, 
+            text="Sign Up", 
+            command=self.to_signup
+        ).grid(row=5, column=1, padx=0, pady=10, sticky='w')
         
         # error messages
-        self.password_err_msg = tk.Label(self, text='Incorrect username/password, try again.', fg='red') 
+        self.password_err_msg = tk.Label(self, text='Incorrect username/password, try again.', fg='red')
         self.signup_err_msg = tk.Label(self, text='Sign up to continue', fg='red')
+    
+    def on_login(self):
+        EventListener.trigger_event('on_login', self)
+    
+    def to_signup(self, event):
+        EventListener.trigger_event('to_signup', self)
 
-class SignUpView(tk.Frame, EventListener):
+class SignUpView(tk.Frame):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -119,6 +135,7 @@ class SignUpView(tk.Frame, EventListener):
         self.fullname = tk.StringVar()
         self.username = tk.StringVar()
         self.password = tk.StringVar()
+        self.agreed = tk.BooleanVar()
 
         # input entries
         self.name_label = tk.Label(self, text='Full Name').grid(row=1, column=0, padx=10, sticky='w')
@@ -129,21 +146,27 @@ class SignUpView(tk.Frame, EventListener):
         self.passw_entry = tk.Entry(self, textvariable=self.password, show='*').grid(row=3, column=1, padx=(0,20), sticky='ew')
 
         # terms and conditions checkbox
-        self.agreed = tk.BooleanVar()
         self.checkbox = tk.Checkbutton(
             self,   
             text='Agree to Terms and Conditions', 
-            variable=self.agreed).grid(row=4, column=1, padx=0, pady=10, sticky='w')
+            variable=self.agreed
+        ).grid(row=4, column=1, padx=0, pady=10, sticky='w')
         
         # sign up button
-        self.signup_btn = tk.Button(self, text='Sign Up', command=EventListener.trigger_event('on_signup', self, self.fullname.get(), self.username.get(), self.password.get(), self.agreed.get()))
-        self.signup_btn.grid(row=5, column=1, padx=0, pady=10, sticky='w')
+        self.signup_btn = tk.Button(
+            self, 
+            text='Sign Up', 
+            command=self.on_signup
+        ).grid(row=5, column=1, padx=0, pady=10, sticky='w')
        
         # error messages
         self.signup_err_msg = tk.Label(self, text='Username already exists, choose another.', fg='red')
         self.agree_err_msg = tk.Label(self, text='Accept terms and conditions to continue.', fg='red')
 
-class HomeView(tk.Frame, EventListener):
+    def on_signup(self):
+        EventListener.trigger_event('on_signup', self)
+
+class HomeView(tk.Frame):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -152,12 +175,34 @@ class HomeView(tk.Frame, EventListener):
 
         self.header = tk.Label(self, text='Passprotect').pack()
         self.listbox = tk.Listbox(self).pack()
-        for website in args:
-            self.listbox.insert(tk.END, website)
-            
-        self.select_btn = tk.Button(self, text='Select', command=EventListener.trigger_event('on_select', self, self.listbox.get(self.listbox.curselection()[0]))).pack()
-        self.add_btn = tk.Button(self, text='Add Password', command=EventListener.trigger_event('to_add', self, None)).pack()
-        self.logout_btn = tk.Button(self, text='Logout', command=EventListener.trigger_event('on_logout', self, None)).pack()
+     
+        self.select_btn = tk.Button(
+            self, 
+            text='Select', 
+            command=self.on_select
+        ).pack()
+
+        self.add_btn = tk.Button(
+            self, 
+            text='Add Password', 
+            command=self.to_add
+        ).pack()
+
+        self.logout_btn = tk.Button(
+            self, 
+            text='Logout', 
+            command=self.on_logout
+            ).pack()
+        
+    def on_select(self):
+        EventListener.trigger_event('on_select', self)
+
+    def to_add(self):   
+        EventListener.trigger_event('to_add', self)
+
+    def on_logout(self):
+        EventListener.trigger_event('on_logout', self)
+
         '''
         self.header = tk.Label(self, text='Passprotect').grid(row=0, column=0, columnspan=2, padx=10, pady=10)
         self.listbox = tk.Listbox(self).grid(row=1, column=0, columnspan=2, padx=10, pady=10)
@@ -169,7 +214,7 @@ class HomeView(tk.Frame, EventListener):
         self.logout_btn = tk.Button(self, text='Logout').grid(row=4, column=1, padx=0, pady=10, sticky='nsew')
         '''
         
-class AddView(tk.Frame, EventListener):
+class AddView(tk.Frame):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -189,9 +234,22 @@ class AddView(tk.Frame, EventListener):
         self.uname_entry = tk.Entry(self, textvariable=self.username).grid(row=2, column=1, padx=(0,20), sticky='ew')
         self.passw_entry = tk.Entry(self, textvariable=self.password, show='*').grid(row=3, column=1, padx=(0,20), sticky='ew')
 
-        self.add_btn = tk.Button(self, text='Add', command=EventListener.trigger_event('add_password', self, self.username.get(), self.password.get(), self.website.get()))
-        self.add_btn.grid(row=4, column=1, padx=0, pady=10, sticky='w')
-        self.back_btn = tk.Button(self, text='Back', command=EventListener.trigger_event('on_back', self, None))
-        self.back_btn.grid(row=4, column=0, padx=0, pady=10, sticky='w')
+        self.add_btn = tk.Button(
+            self, 
+            text='Add',
+            command=self.on_add
+        ).grid(row=4, column=1, padx=0, pady=10, sticky='w')
+
+        self.back_btn = tk.Button(
+            self, 
+            text='Back', 
+            command=self.on_back
+        ).grid(row=4, column=0, padx=0, pady=10, sticky='w')
         
         self.err_msg = tk.Label(self, text='A password already exists for this website', fg='red')
+
+    def on_add(self):
+        EventListener.trigger_event('add_password', self)
+
+    def on_back(self):
+        EventListener.trigger_event('on_back', self)
