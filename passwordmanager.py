@@ -129,7 +129,7 @@ def get_key(file_path):
         print('Key file can not be found')
     # initializing and returning encryption cipher
     
-def add_password(website, username, password, key, passwords):
+def add_password(website, username, password, user_id, key, passwords):
     '''
     - function adds a password to a dictionary of managed passwords
     - dictionary format passwords[user][website] = {'username': username, 'password': encrypted_password}
@@ -147,7 +147,7 @@ def add_password(website, username, password, key, passwords):
         return None
     # if entry does not exist    
     else:
-        passwords_file = os.join('passwords', 'passwords.json')
+        passwords_file = os.path.join('passwords', 'passwords.json')
         # encrypting password
         enc_password = encrypt_password(password, key)
         # storing username and password to dictionary with lowercased website as key
@@ -156,8 +156,10 @@ def add_password(website, username, password, key, passwords):
             'password' : enc_password,
             'website' : website
         }
+        # getting full password file
+        user_passwords = get_json(passwords_file)
+        # saving new entry in user's passwords
         passwords[site] = entry
-        write_json(passwords_file, passwords)
     return passwords
 
 def get_password(website, key, passwords):

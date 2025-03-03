@@ -6,73 +6,70 @@ class Model:
     class to handle the data of the application
     '''
     def __init__(self):
-        self.auth_model = AuthModel()
-        self.password_model = PasswordModel()
+        self.base_model = PasswordModel()
 
 # Authorization model
-class AuthModel():
+class AuthModel:
     '''
     class to handle the authentication of the application
     '''
-    logged_in = False
-    current_user_fullname = None
-    current_user = None
-    current_id = None
-    master_file = os.path.join('master', 'master_passwords.json')
-    passwords_file = os.path.join('passwords', 'passwords.json')
-    users = None
-    user = None
-    user_passwords = None
-    key = None
-    
     def __init__(self):
-        super().__init__()
-       
-
+        self.master_file = os.path.join('master', 'master_passwords.json')
+        self.passwords_file = os.path.join('passwords', 'passwords.json')
+        self.logged_in = False
+        self.current_user_fullname = None
+        self.current_user = None
+        self.current_id = None
+        self.users = None
+        self.user = None
+        self.all_passwords = None
+        self.current_user_passwords = None
+        self.key = None
+    
     def login(self, username, password):
         # checking if any users exist
-        if os.path.exists(AuthModel.master_file) is False:
+        if os.path.exists(self.master_file) is False:
             return None
         logged_in = pm.login(username, password)
         if logged_in is True:
-            AuthModel.logged_in = True
-            AuthModel.users = pm.get_json(AuthModel.master_file)
-            AuthModel.user = self.users[username]
-            AuthModel.current_user_fullname = self.user['full_name']
-            AuthModel.current_user = username
-            AuthModel.current_id = int(self.user['user_id'])
-            passwords = pm.get_json(AuthModel.passwords_file)
-            AuthModel.user_passwords = passwords[AuthModel.current_id]
-            AuthModel.key = pm.get_key(self.user['key_file'])
+            self.logged_in = True
+            self.users = pm.get_json(self.master_file)
+            self.user = self.users[username]
+            self.current_user_fullname = self.user['full_name']
+            self.current_user = username
+            self.current_id = self.user['user_id']
+            self.all_passwords = pm.get_json(self.passwords_file)
+            self.current_user_passwords = self.all_passwords[self.current_id]
+            self.key = pm.get_key(self.user['key_file'])
         else:
-            AuthModel.logged_in = False
-            AuthModel.current_user_fullname = None
-            AuthModel.current_user = None
+            self.logged_in = False
+            self.current_user_fullname = None
+            self.current_user = None
         return logged_in
 
     def logout(self):
-        AuthModel.logged_in = False
-        AuthModel.current_user_fullname = None
-        AuthModel.current_user = None
-        AuthModel.current_id = 0
-        AuthModel.user = None
-        AuthModel.users = None
-        AuthModel.user_passwords = None
-        AuthModel.key = None
+        self.logged_in = False
+        self.current_user_fullname = None
+        self.current_user = None
+        self.current_id = None
+        self.user = None
+        self.users = None
+        self.current_user_passwords = None
+        self.key = None
 
     def signup(self, name, username, password):
         signed_up = pm.signup(name, username, password)
 
         if signed_up is True:
-            AuthModel.users = pm.get_json(AuthModel.master_file)
-            AuthModel.logged_in = True
-            AuthModel.user = self.users[username]
-            AuthModel.current_user_fullname = name
-            AuthModel.current_user = username
-            AuthModel.current_id = int(self.user['user_id'])
-            passwords = pm.get_json(AuthModel.passwords_file)
-            AuthModel.user_passwords = passwords[AuthModel.current_id]
-            AuthModel.key = pm.get_key(self.user['key_file'])
+            self.users = pm.get_json(self.master_file)
+            self.logged_in = True
+            self.user = self.users[username]
+            self.current_user_fullname = name
+            self.current_user = username
+            self.current_id = self.user['user_id']
+            self.all_passwords = pm.get_json(self.passwords_file)
+            self.current_user_passwords = self.all_passwords[self.current_id]
+            self.key = pm.get_key(self.user['key_file'])
             return True
         else:
             return False
@@ -85,23 +82,23 @@ class PasswordModel(AuthModel):
     def __init__(self):
         super().__init__()
         self.num_passwords = 0
-        self.key = AuthModel.key
-        self.passwords = AuthModel.user_passwords
-
+    
     def add_password(self, website, username, password):
-        passwords = pm.add_password(website, username, password, self.key, self.passwords)
+        passwords = pm.add_password(website, username, password, self.current_id, self.key, self.current_user_passwords)
         if passwords is None:
             return False
         else:
-            self.passwords = passwords
+            self.current_user_passwords = passwords
+            self.all_passwords[self.current_id] = self.current_user_passwords
+            pm.write_json(self.passwords_file, self.all_passwords)
             self.num_passwords += 1
             return True
 
     def get_password(self, website):
-        pm.get_password(website, self.key, self.passwords)
+        pm.get_password(website, self.key, self.current_user_passwords)
 
     def change_password(self, website, old_password, new_password, confirm_password):
-        changed = pm.change_password(website, old_password, new_password, confirm_password, self.key, self.passwords)
+        changed = pm.change_password(website, old_password, new_password, confirm_password, self.key, self.current_user_passwords)
         if changed is None:
             return None
         elif changed is False:
@@ -111,10 +108,7 @@ class PasswordModel(AuthModel):
             return True
         
     def get_websites(self):
-        if self.passwords is None:
-            return []
-        else:
-            return pm.get_websites(self.passwords)
+        return pm.get_websites(self.current_user_passwords)
 
 
 
