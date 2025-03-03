@@ -109,24 +109,16 @@ def get_json(filename) -> dict:
             passwords = {}
     return passwords
 
+def write_json(filename, data):
+    # writing data to json file
+    with open(filename, 'w') as file:
+        json.dump(data, file)
+
 def get_key(file_path):
     '''
     Function checks if a key encryption file exists, if so it returns the key stored 
     in the file, if not, it generates a new key and stores it in the file key.key
     '''
-
-    #  *** FINISH HOW TO INCORPORATE USER_ID NUMBER AND KEY FILE
-    
-    # checking if the key file doesn't exist
-    '''
-    if not os.path.exists(file_path):
-        # generating key
-        key = generate_key()
-        # writing key to key file
-        with open(file_path, 'w') as key_file:
-            key_file.write(key)
-    '''
-    # if key file already exists block
     try:
         # reading key from key.key file
         with open(file_path, 'rb') as key_file:
@@ -137,48 +129,86 @@ def get_key(file_path):
         print('Key file can not be found')
     # initializing and returning encryption cipher
     
-
-def add_password(website, username, password, key, passwords):
+def add_password(website, username, password, user_id, key, passwords):
     '''
     - function adds a password to a dictionary of managed passwords
-    - dictionary format passwords[website] = {'username': username, 'password': encrypted_password}
+    - dictionary format passwords[user][website] = {'username': username, 'password': encrypted_password}
     '''
-    website = website.to_lower().strip()
+    site = website.lower().strip()
+    '''
+    # checking if user has an entry in the passwords file or not
+    if user not in passwords.keys():
+        passwords[user] = {}
+    '''
+
     # checking if website entry already exists in password keys
-    # if entry does not exist
-    if website not in passwords[username].keys():
+    # if entry already exists in dictionary print warning message
+    if site in passwords.keys():
+        return None
+    # if entry does not exist    
+    else:
+        passwords_file = os.path.join('passwords', 'passwords.json')
         # encrypting password
         enc_password = encrypt_password(password, key)
         # storing username and password to dictionary with lowercased website as key
-        data = {website : enc_password}
-        passwords[username].update(data)
-        print('Saved password successfully')
-    # if entry already exists in dictionary print warning message
-    else:
-        print('A password already exists for this website')
+        entry = {
+            'username' : username,
+            'password' : enc_password,
+            'website' : website
+        }
+        # getting full password file
+        user_passwords = get_json(passwords_file)
+        # saving new entry in user's passwords
+        passwords[site] = entry
     return passwords
 
-def get_password(username, website, key, passwords):
-    website = website.to_lower().strip()
-    if website in passwords[username].keys():
-        enc_password = passwords[username][website]
+def get_password(website, key, passwords):
+    site = website.lower().strip()
+
+    if site in passwords.keys():
+        enc_password = passwords[site]['password']
         dec_password = decrypt_password(enc_password, key)
         pyperclip.copy(dec_password)
         print('Password saved to clipboard')
     else:
         print('A password does not exist for the given website')
 
+def get_websites(passwords):
+    websites = []
+    if len(passwords) == 0:
+        return websites
+    for website in passwords.keys():
+        websites.append(website)
+    return websites
+
+def change_password(website, old_password, new_password, confirm_password, key, passwords):
+    website = website.lower().strip()
+    enc_password = passwords[website]['password']
+    dec_password = decrypt_password(enc_password, key)
+    if dec_password == old_password:
+        if new_password == confirm_password:
+            enc_new_password = encrypt_password(new_password, key)
+            passwords[website]['password'] = enc_new_password
+        else:
+            return False
+    else:
+        return None
+    
+    return passwords
+    
 def login(username, password):
     '''
     Function accepts the username and password and authenticates a login attempt.
     '''
-    stored_users = get_json('master_passwords')
+    master_file = os.path.join('master', 'master_passwords.json')
+    stored_users = get_json(master_file)
     if len(stored_users) == 0:
         return None
     else:
         hashed_password = hash_password(password)
         if username in stored_users.keys():
-            if hashed_password == stored_users[username]['password']: 
+            user = stored_users[username]
+            if hashed_password == user['password']: 
                 return True
             else:
                 return False
@@ -192,18 +222,20 @@ def signup(fullname, username, password):
     otherwise. 
     '''
 
-    stored_users = get_json('master_passwords') # getting currently stored users
+    stored_users = get_json('master_passwords.json') # getting currently stored users
 
     # checking if the username is unique
     if username not in stored_users.keys():
-        user_id = len(stored_users) + 1
+        user_id = len(stored_users) # generating a user id
         hashed_password = hash_password(password)   # hashing the chosen password
 
         # building key file name for user
         key_dir = 'keys'
         key_filename = f'encryption_key_{user_id}.key'
         key_file = os.path.join(key_dir, key_filename)
-
+        passwords_file = os.path.join('passwords', 'passwords.json')
+        master_file = os.path.join('master', 'master_passwords.json')
+        passwords = list()
         # data to be added to master passwords file
         user_data = {
             'user_id' : user_id, 
@@ -220,9 +252,22 @@ def signup(fullname, username, password):
         # making key directory if it doesn't exist
         if not os.path.exists('keys'):
             os.makedirs('keys')
+
+        # making password directory if it doesn't exist
+        if not os.path.exists('passwords'):
+            os.makedirs('passwords')
+        else:
+            passwords = get_json(passwords_file)
+        passwords.append(dict())
+        write_json(passwords_file, passwords)
+
+        # making master password directory if it doesn't exist
+        if not os.path.exists('master'):
+            os.makedirs('master')
+
         # writing new dict of known users
-        with open('master_passwords.json', 'w') as file:
-            json.dump(stored_users, file)
+        write_json(master_file, stored_users)
+
         # writing key file for 
         with open(key_file, 'wb') as file:
             file.write(key)
