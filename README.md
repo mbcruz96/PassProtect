@@ -8,6 +8,6 @@
 - Both formats securely store encrypted website passwords and hashed user passwords using SQL databases, json files and CRUD operations
 
 **How to use**
-- upload repository onto machine
-- download requirnments.txt in a virtual environment
-- run python passprotect.py
+- Upload this repository onto your machine
+- Download all necessary python libraries using the requirnments.txt file in a virtual environment
+- Run the passprotect.py file in the virtual environment
