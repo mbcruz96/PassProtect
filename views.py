@@ -24,7 +24,7 @@ class Root(tk.Tk):
 
         start_width = 500
         min_width = 400
-        start_height = 300
+        start_height = 350
         min_height = 250
 
         self.geometry(f"{start_width}x{start_height}")
@@ -43,6 +43,7 @@ class View:
             'signup' : SignUpView,
             'home' : HomeView,
             'add' : AddView,
+            'change': ChangeView
         }
 
     def switch(self, view):
@@ -96,7 +97,7 @@ class LoginView(tk.Frame):
     def on_login(self):
         EventListener.trigger_event('on_login', self)
     
-    def to_signup(self, event):
+    def to_signup(self):
         EventListener.trigger_event('to_signup', self)
 
 class SignUpView(tk.Frame):
@@ -156,24 +157,35 @@ class HomeView(tk.Frame):
      
         self.select_btn = tk.Button(
             self, 
-            text='Select', 
+            text='Get Password', 
             command=self.on_select
-        ).pack()
+        ).pack(padx=0, pady=10)
+
+        self.change_btn = tk.Button(
+            self,
+            text='Change Password',
+            command=self.on_change
+        ).pack(padx=0, pady=10)
 
         self.add_btn = tk.Button(
             self, 
             text='Add Password', 
             command=self.to_add
-        ).pack()
+        ).pack(padx=0, pady=10)
 
         self.logout_btn = tk.Button(
             self, 
             text='Logout', 
             command=self.on_logout
-            ).pack()
+            ).pack(padx=0, pady=10)
         
     def on_select(self):
         EventListener.trigger_event('on_select', self)
+
+    def on_change(self):
+        index = self.listbox.curselection()
+        item = self.listbox.get(index[0])
+        EventListener.trigger_event('on_change', self, item)
 
     def to_add(self):   
         EventListener.trigger_event('to_add', self)
@@ -222,12 +234,55 @@ class AddView(tk.Frame):
             self, 
             text='Back', 
             command=self.on_back
-        ).grid(row=4, column=0, padx=0, pady=10, sticky='w')
+        ).grid(row=5, column=1, padx=0, pady=10, sticky='w')
         
         self.err_msg = tk.Label(self, text='A password already exists for this website', fg='red')
 
     def on_add(self):
         EventListener.trigger_event('add_password', self)
+
+    def on_back(self):
+        EventListener.trigger_event('on_back', self)
+
+class ChangeView(tk.Frame):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.grid_columnconfigure(0, weight=0)
+        self.grid_columnconfigure(1, weight=1)
+
+        self.header = tk.Label(self, text='Change Password').grid(row=0, column=0, columnspan=2, padx=10, pady=10)
+        
+        self.old_password = tk.StringVar()
+        self.new_password = tk.StringVar()
+        self.confirm_password = tk.StringVar()
+
+        self.website = tk.Label(self, text='Change Password').grid(row=0, column=0, columnspan=2, padx=10, pady=10)
+        self.old_password_label = tk.Label(self, text='Previous Password').grid(row=1, column=0, padx=10, sticky='w')
+        self.new_password_label = tk.Label(self, text='New Password').grid(row=2, column=0, padx=10, sticky='w')
+        self.confirm_password_label = tk.Label(self, text='Confirm Password').grid(row=3, column=0, padx=10, sticky='w')
+        self.website_entry = tk.Entry(self, textvariable=self.old_password, show='*').grid(row=1, column=1, padx=(0,20), sticky='ew')
+        self.uname_entry = tk.Entry(self, textvariable=self.new_password, show='*').grid(row=2, column=1, padx=(0,20), sticky='ew')
+        self.passw_entry = tk.Entry(self, textvariable=self.confirm_password, show='*').grid(row=3, column=1, padx=(0,20), sticky='ew')
+
+        self.confirm_btn = tk.Button(
+            self, 
+            text='Confirm',
+            command=self.on_confirm
+        ).grid(row=4, column=1, padx=0, pady=10, sticky='w')
+
+        self.back_btn = tk.Button(
+            self, 
+            text='Back', 
+            command=self.on_back
+        ).grid(row=5, column=1, padx=0, pady=10, sticky='w')
+
+        self.incorrec_err_msg = tk.Label(self, text='Previous password incorrect', fg='red')
+        self.mismatch_err_msg = tk.Label(self, text='New passwords do not match', fg='red')
+
+
+    def on_confirm(self):
+        EventListener.trigger_event('on_confirm', self)
 
     def on_back(self):
         EventListener.trigger_event('on_back', self)

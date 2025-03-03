@@ -9,6 +9,7 @@ class Controller:
         self.frame = None
         self.view = view
         self.model = model
+        self.website = None
 
         # initializing controllers
         self.signup_controller = SignupController(model, view)
@@ -23,6 +24,8 @@ class Controller:
         EventListener.add_listener('on_signup', self.on_signup)
         EventListener.add_listener('to_add', self.to_add)
         EventListener.add_listener('add_password', self.add_password)
+        EventListener.add_listener('to_change', self.to_change)
+        EventListener.add_listener('on_change', self.on_change)
         EventListener.add_listener('on_back', self.on_back)
 
     # binding event listeners to their respective functions
@@ -43,6 +46,13 @@ class Controller:
 
     def add_password(self, frame):
         self.frame = self.add_controller.add(frame)
+
+    def to_change(self, frame):
+        self.frame, self.website = self.home_controller.change(frame)
+                                                 
+    def on_change(self, frame):
+        self.frame = self.home_controller.change(frame, self.website)
+        self.website = None
 
     def on_back(self, frame):
         self. frame = self.add_controller.back(frame)
@@ -78,7 +88,7 @@ class LoginController:
            websites = self.model.password_model.get_websites()
            new_frame = self.view.switch('home')
            for website in websites:
-               new_frame.children['!listbox'].insert(tk.END, website)
+               new_frame.children['!listbox'].insert(tk.END, website.title())
            return new_frame
         return frame
 
@@ -105,7 +115,7 @@ class SignupController:
                 websites = self.model.password_model.get_websites()
                 new_frame = self.view.switch('home')
                 for website in websites:
-                    new_frame.children['!listbox'].insert(tk.END, website)
+                    new_frame.children['!listbox'].insert(tk.END, website.title())
                 return new_frame
         else:
             frame.children['!label6'].grid(row=6, column=1, padx=0, pady=10, sticky='w')
@@ -122,6 +132,10 @@ class HomeController:
         index = frame.children['!listbox'].curselection()
         item = frame.children['!listbox'].get(index[0])
 
+    def change(self, frame):
+        new_frame = self.view.switch('change')
+        return new_frame
+    
     def add(self, frame):
         new_frame = self.view.switch('add')
         return new_frame
@@ -152,7 +166,50 @@ class AddController:
             websites = self.model.password_model.get_websites()
             new_frame = self.view.switch('home')
             for website in websites:
-               new_frame.children['!listbox'].insert(tk.END, website)
+               new_frame.children['!listbox'].insert(tk.END, website.title())
+            return new_frame
+        return frame
+
+    def change(self, frame):
+        website = frame.children['!listbox'].get(tk.ACTIVE)
+        self.switch('change')
+        return(frame, website)
+
+    def back(self, frame):
+        frame.children['!entry'].delete(0, tk.END)
+        frame.children['!entry2'].delete(0, tk.END)
+        frame.children['!entry3'].delete(0, tk.END)
+        websites = self.model.password_model.get_websites()
+        new_frame = self.view.switch('home')
+        for website in websites:
+            new_frame.children['!listbox'].insert(tk.END, website.title())
+        return new_frame
+    
+class ChangeController:
+    def __init__(self, model, view):
+        self.model = model
+        self.view = view
+
+    def change(self, frame, website):
+        frame.children['!label5'].grid_forget()
+        frame.children['!label6'].grid_forget()
+        username = frame.old_password.get()
+        password = frame.new_password.get()
+        website = frame.confirm_password.get()
+        password_changed = self.model.password_model.add_password(website, username, password)
+        
+        if password_changed is False:
+            frame.children['!label5'].pack()
+        elif password_changed is None:
+            frame.children['!label6'].pack()
+        else:
+            frame.children['!entry'].delete(0, tk.END)
+            frame.children['!entry2'].delete(0, tk.END)
+            frame.children['!entry3'].delete(0, tk.END)
+            websites = self.model.password_model.get_websites()
+            new_frame = self.view.switch('home')
+            for website in websites:
+               new_frame.children['!listbox'].insert(tk.END, website.title())
             return new_frame
         return frame
 
@@ -163,5 +220,5 @@ class AddController:
         websites = self.model.password_model.get_websites()
         new_frame = self.view.switch('home')
         for website in websites:
-            new_frame.children['!listbox'].insert(tk.END, website)
+            new_frame.children['!listbox'].insert(tk.END, website.title())
         return new_frame
