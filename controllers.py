@@ -16,6 +16,7 @@ class Controller:
         self.login_controller = LoginController(model, view)
         self.home_controller = HomeController(model, view)
         self.add_controller = AddController(model, view)
+        self.change_controller = ChangeController(model, view)
 
         # creating event listeners
         EventListener.add_listener('on_login', self.on_login)
@@ -55,7 +56,7 @@ class Controller:
         self.frame, self.website = self.home_controller.change(frame)
                                                  
     def on_change(self, frame):
-        self.frame = self.home_controller.change(frame, self.website)
+        self.frame = self.change_controller.change(frame, self.website)
         self.website = None
 
     def on_back(self, frame):
@@ -131,7 +132,6 @@ class HomeController:
         self.view = view
       
     def select(self, frame):
-        # FINISH THE CALLBACK FUNCTION
         index = frame.children['!listbox'].curselection()
         item = frame.children['!listbox'].get(index[0])
         self.model.base_model.get_password(item)
@@ -196,6 +196,7 @@ class ChangeController:
         self.view = view
 
     def change(self, frame, website):
+        # FIX FUNCTION, FUNCTION ADDS PASSWORD TO WEBSITES INSTEAD OF CHANGING PASSWORD
         frame.children['!label5'].grid_forget()
         frame.children['!label6'].grid_forget()
         username = frame.old_password.get()

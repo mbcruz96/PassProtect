@@ -164,7 +164,7 @@ class HomeView(tk.Frame):
         self.change_btn = tk.Button(
             self,
             text='Change Password',
-            command=self.on_change
+            command=self.to_change
         ).pack(padx=0, pady=10)
 
         self.add_btn = tk.Button(
@@ -182,10 +182,8 @@ class HomeView(tk.Frame):
     def on_select(self):
         EventListener.trigger_event('on_select', self)
 
-    def on_change(self):
-        index = self.listbox.curselection()
-        item = self.listbox.get(index[0])
-        EventListener.trigger_event('on_change', self, item)
+    def to_change(self):
+        EventListener.trigger_event('to_change', self)
 
     def to_add(self):   
         EventListener.trigger_event('to_add', self)
@@ -268,7 +266,7 @@ class ChangeView(tk.Frame):
         self.confirm_btn = tk.Button(
             self, 
             text='Confirm',
-            command=self.on_confirm
+            command=self.on_change
         ).grid(row=4, column=1, padx=0, pady=10, sticky='w')
 
         self.back_btn = tk.Button(
@@ -277,12 +275,12 @@ class ChangeView(tk.Frame):
             command=self.on_back
         ).grid(row=5, column=1, padx=0, pady=10, sticky='w')
 
-        self.incorrec_err_msg = tk.Label(self, text='Previous password incorrect', fg='red')
+        self.incorrect_err_msg = tk.Label(self, text='Previous password incorrect', fg='red')
         self.mismatch_err_msg = tk.Label(self, text='New passwords do not match', fg='red')
 
 
-    def on_confirm(self):
-        EventListener.trigger_event('on_confirm', self)
+    def on_change(self):
+        EventListener.trigger_event('on_change', self)
 
     def on_back(self):
         EventListener.trigger_event('on_back', self)
