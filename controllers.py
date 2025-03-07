@@ -1,5 +1,6 @@
 import passwordmanager as pm
 import tkinter as tk
+from tkinter import messagebox
 import views
 from views import EventListener
 import models
@@ -28,11 +29,22 @@ class Controller:
         EventListener.add_listener('add_password', self.add_password)
         EventListener.add_listener('to_change', self.to_change)
         EventListener.add_listener('on_change', self.on_change)
+        EventListener.add_listener('on_remove', self.on_remove)
         EventListener.add_listener('on_back', self.on_back)
 
     # binding event listeners to their respective functions
+    def _bind(self, frame):
+        frame.children['!listbox'].bind('<ButtonRelease-1>', self.on_popup)
+
+    def on_popup(self, event):
+            try:
+                self.frame.children['!menu'].post(event.x_root, event.y_root)
+            finally:
+                self.frame.children['!menu'].grab_release()
+
     def on_login(self, frame):
         self.frame = self.login_controller.login(frame)
+        self._bind(self.frame)
 
     def on_logout(self, frame):
         self.frame = self.home_controller.logout(frame)
@@ -42,12 +54,14 @@ class Controller:
     
     def on_signup(self, frame):
         self.frame = self.signup_controller.signup(frame)
+        self._bind(self.frame)
 
     def on_select(self, frame):
         self.frame = self.home_controller.select(frame)
 
     def to_add(self, frame):
         self.frame = self.home_controller.add(frame)
+
 
     def add_password(self, frame):
         self.frame = self.add_controller.add(frame)
@@ -58,9 +72,16 @@ class Controller:
     def on_change(self, frame):
         self.frame = self.change_controller.change(frame, self.website)
         self.website = None
+        self._bind(self.frame)
+
+
+    def on_remove(self, frame):
+        self.frame = self.home_controller.remove(frame)
+        self._bind(self.frame)
 
     def on_back(self, frame):
         self. frame = self.add_controller.back(frame)
+        self._bind(self.frame)
 
     # starting the application
     def start(self):
@@ -141,6 +162,16 @@ class HomeController:
         new_frame = self.view.switch('change')
         return new_frame
     
+    def remove(self, frame):
+        index = frame.children['!listbox'].curselection()
+        website = frame.children['!listbox'].get(index[0])
+        confirm = messagebox.askyesno('Remove Password', f'Are you sure you want to remove the password for {website}?')
+        if confirm is True:
+            removed = self.model.base_model.remove_password(website)
+            if removed is True:
+                frame.children['!listbox'].delete(index)
+        return frame
+    
     def add(self, frame):
         new_frame = self.view.switch('add')
         return new_frame
@@ -202,7 +233,7 @@ class ChangeController:
         username = frame.old_password.get()
         password = frame.new_password.get()
         website = frame.confirm_password.get()
-        password_changed = self.model.base_model.add_password(website, username, password)
+        password_changed = self.model.base_model.change_password(website, username, password)
         
         if password_changed is False:
             frame.children['!label5'].pack()

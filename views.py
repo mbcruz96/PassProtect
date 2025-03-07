@@ -154,7 +154,13 @@ class HomeView(tk.Frame):
 
         self.header = tk.Label(self, text='Passprotect').pack()
         self.listbox = tk.Listbox(self).pack()
-     
+
+        self.popup_menu = tk.Menu(self, tearoff=0)
+        self.popup_menu.add_command(label='Get Password', command=self.on_select)
+        self.popup_menu.add_command(label='Change Password', command=self.to_change)
+        self.popup_menu.add_command(label='Remove', command=self.on_remove)
+
+        '''
         self.select_btn = tk.Button(
             self, 
             text='Get Password', 
@@ -166,6 +172,7 @@ class HomeView(tk.Frame):
             text='Change Password',
             command=self.to_change
         ).pack(padx=0, pady=10)
+        '''
 
         self.add_btn = tk.Button(
             self, 
@@ -184,6 +191,17 @@ class HomeView(tk.Frame):
 
     def to_change(self):
         EventListener.trigger_event('to_change', self)
+
+    def on_remove(self):
+        EventListener.trigger_event('on_remove', self)
+
+    '''
+    de8f on_popup(self, event):
+        try:
+            self.popup_menu.post(event.x_root, event.y_root)
+        finally:
+            self.popup_menu.grab_release()
+    '''
 
     def to_add(self):   
         EventListener.trigger_event('to_add', self)

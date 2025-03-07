@@ -98,7 +98,7 @@ class PasswordModel(AuthModel):
         pm.get_password(website, self.key, self.current_user_passwords)
 
     def change_password(self, website, old_password, new_password, confirm_password):
-        changed = pm.change_password(website, old_password, new_password, confirm_password, self.key, self.current_user_passwords)
+        changed = pm.change_password(website, old_password, new_password, confirm_password, self.current_id, self.key, self.current_user_passwords)
         if changed is None:
             return None
         elif changed is False:
@@ -107,6 +107,14 @@ class PasswordModel(AuthModel):
             self.passwords = changed
             return True
         
+    def remove_password(self, website):
+        removed = pm.remove_password(website, self.current_id, self.current_user_passwords)
+        if removed is False:
+            return False
+        else:
+            self.current_user_passwords = removed
+            return True
+
     def get_websites(self):
         return pm.get_websites(self.current_user_passwords)
 

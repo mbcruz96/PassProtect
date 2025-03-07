@@ -71,28 +71,28 @@ def generate_key():
     key = Fernet.generate_key()
     return key
 
-def hash_password(password):
+def hash_password(password : str):
     # hash master password
     hash = hashlib.sha256()
     hash.update(password.encode())
     return hash.hexdigest()
     
-def initialize_key(key):
+def initialize_key(key : bytes):
     # initializing key as cipher
     f = Fernet(key)
     return f 
 
-def encrypt_password(password, key) -> str:
+def encrypt_password(password : str, key : Fernet) -> str:
     # encrypting password using initialized cipher and decoding encrypted message to plaintext
     enc_message = key.encrypt(password.encode()).decode()
     return enc_message
 
-def decrypt_password(password, key) -> str:
+def decrypt_password(password : str, key : Fernet) -> str:
     # decrypting password using initialized cipher and decoding decrypted message to plaintext
     dec_message = key.decrypt(password).decode()
     return dec_message
 
-def get_json(filename) -> dict:
+def get_json(filename : str) -> dict:
     # checking if passwords json file already exists
     # if file does not exist, initialize empty password dictionary
     if not os.path.exists(filename):
@@ -109,12 +109,12 @@ def get_json(filename) -> dict:
             passwords = {}
     return passwords
 
-def write_json(filename, data):
+def write_json(filename : str, data : dict):
     # writing data to json file
     with open(filename, 'w') as file:
         json.dump(data, file)
 
-def get_key(file_path):
+def get_key(file_path : str):
     '''
     Function checks if a key encryption file exists, if so it returns the key stored 
     in the file, if not, it generates a new key and stores it in the file key.key
@@ -129,7 +129,7 @@ def get_key(file_path):
         print('Key file can not be found')
     # initializing and returning encryption cipher
     
-def add_password(website, username, password, user_id, key, passwords):
+def add_password(website : str, username : str, password : str, user_id: int, key : Fernet, passwords : dict):
     '''
     - function adds a password to a dictionary of managed passwords
     - dictionary format passwords[user][website] = {'username': username, 'password': encrypted_password}
@@ -147,7 +147,6 @@ def add_password(website, username, password, user_id, key, passwords):
         return None
     # if entry does not exist    
     else:
-        passwords_file = os.path.join('passwords', 'passwords.json')
         # encrypting password
         enc_password = encrypt_password(password, key)
         # storing username and password to dictionary with lowercased website as key
@@ -156,13 +155,19 @@ def add_password(website, username, password, user_id, key, passwords):
             'password' : enc_password,
             'website' : website
         }
-        # getting full password file
-        user_passwords = get_json(passwords_file)
+        
         # saving new entry in user's passwords
         passwords[site] = entry
+
+        # getting full password file
+        passwords_file = os.path.join('passwords', 'passwords.json')
+        user_passwords = get_json(passwords_file)
+        # saving new entry in full password file
+        user_passwords[user_id] = passwords
+        write_json(passwords_file, user_passwords)
     return passwords
 
-def get_password(website, key, passwords):
+def get_password(website : str, key : Fernet, passwords : dict):
     site = website.lower().strip()
 
     if site in passwords.keys():
@@ -173,7 +178,7 @@ def get_password(website, key, passwords):
     else:
         print('A password does not exist for the given website')
 
-def get_websites(passwords):
+def get_websites(passwords : dict):
     websites = []
     if len(passwords) == 0:
         return websites
@@ -181,7 +186,7 @@ def get_websites(passwords):
         websites.append(website)
     return websites
 
-def change_password(website, old_password, new_password, confirm_password, key, passwords):
+def change_password(website : str, old_password : str, new_password : str, confirm_password : str, user_id : int, key : Fernet, passwords: dict):
     website = website.lower().strip()
     enc_password = passwords[website]['password']
     dec_password = decrypt_password(enc_password, key)
@@ -189,6 +194,13 @@ def change_password(website, old_password, new_password, confirm_password, key, 
         if new_password == confirm_password:
             enc_new_password = encrypt_password(new_password, key)
             passwords[website]['password'] = enc_new_password
+            
+            # getting full password file
+            passwords_file = os.path.join('passwords', 'passwords.json')
+            user_passwords = get_json(passwords_file)
+            # saving new entry in full password file
+            user_passwords[user_id] = passwords
+            write_json(passwords_file, user_passwords)
         else:
             return False
     else:
@@ -196,7 +208,21 @@ def change_password(website, old_password, new_password, confirm_password, key, 
     
     return passwords
     
-def login(username, password):
+def remove_password(website : str, user_id : int,  passwords : dict):
+    website = website.lower().strip()
+    try:
+        del passwords[website]
+        # getting full password file
+        passwords_file = os.path.join('passwords', 'passwords.json')
+        user_passwords = get_json(passwords_file)
+        # saving new entry in full password file
+        user_passwords[user_id] = passwords
+        write_json(passwords_file, user_passwords)
+        return passwords
+    except KeyError:
+        return False
+    
+def login(username: str, password: str):
     '''
     Function accepts the username and password and authenticates a login attempt.
     '''
@@ -215,7 +241,7 @@ def login(username, password):
         else:
             return False
 
-def signup(fullname, username, password):
+def signup(fullname : str, username : str, password : str):
     '''
     Function allows a user to signup for the password manager. The username must be
     unique and the function returns true if the signup was successful and false 
