@@ -1,5 +1,6 @@
 from flask import Flask, redirect, url_for, request, render_template
 import json 
+import pandas as pd
 import hashlib
 import pyperclip
 import os
@@ -114,6 +115,14 @@ def write_json(filename : str, data : dict):
     with open(filename, 'w') as file:
         json.dump(data, file)
 
+def update_passwords(user_id: int, updated_passwords: dict):
+    # getting full password file
+    passwords_file = os.path.join('passwords', 'passwords.json')
+    user_passwords = get_json(passwords_file)
+    # saving new entry in full password file
+    user_passwords[user_id] = updated_passwords
+    write_json(passwords_file, user_passwords)
+
 def get_key(file_path : str):
     '''
     Function checks if a key encryption file exists, if so it returns the key stored 
@@ -160,13 +169,44 @@ def add_password(website : str, username : str, password : str, user_id: int, ke
         passwords[site] = entry
 
         # getting full password file
-        passwords_file = os.path.join('passwords', 'passwords.json')
-        user_passwords = get_json(passwords_file)
-        # saving new entry in full password file
-        user_passwords[user_id] = passwords
-        write_json(passwords_file, user_passwords)
+        update_passwords(user_id, passwords)
+
     return passwords
 
+def import_passwords(file_path: str, user_id : int, key : Fernet, passwords: dict):
+    '''
+    Function imports passwords from a csv file and adds them to the user's password file
+    '''
+    # reading csv file
+    if os.path.exists(file_path):
+        df = pd.read_csv(file_path)
+        # filling empty entries with 0
+        df = df.fillna(0)
+
+    # iterating over dataframe rows
+    for index, row in df.iterrows():
+        website = row['Name'].lower().strip()
+        if row['Password'] != 0:
+            password = encrypt_password(row['Password'], key)
+        else:
+            continue
+        
+        # creating password entry
+        data = {
+            'username' : row['Username'],
+            'password' : password,
+            'website' : row['Name'],
+            'url' : row['Website'],
+            'description' : row['Name'],
+            'type' : row['Type'],
+        }
+        # saving entry in passwords dictionary
+        passwords[website] = data
+
+    # updating password file
+    update_passwords(user_id, passwords)
+    return passwords
+    
 def get_password(website : str, key : Fernet, passwords : dict):
     site = website.lower().strip()
 
@@ -178,12 +218,20 @@ def get_password(website : str, key : Fernet, passwords : dict):
     else:
         print('A password does not exist for the given website')
 
+def get_username(website: str, key : Fernet, passwords: dict):
+    site = website.lower().strip()
+
+    if site in passwords.keys():
+        username = passwords[site]['username']
+        pyperclip.copy(username)
+        print('username copied')
+
 def get_websites(passwords : dict):
     websites = []
     if len(passwords) == 0:
         return websites
     for website in passwords.keys():
-        websites.append(website)
+        websites.append(passwords[website]['website'])
     return websites
 
 def change_password(website : str, old_password : str, new_password : str, confirm_password : str, user_id : int, key : Fernet, passwords: dict):
@@ -195,12 +243,8 @@ def change_password(website : str, old_password : str, new_password : str, confi
             enc_new_password = encrypt_password(new_password, key)
             passwords[website]['password'] = enc_new_password
             
-            # getting full password file
-            passwords_file = os.path.join('passwords', 'passwords.json')
-            user_passwords = get_json(passwords_file)
-            # saving new entry in full password file
-            user_passwords[user_id] = passwords
-            write_json(passwords_file, user_passwords)
+            # updating password file
+            update_passwords(user_id, passwords)
         else:
             return False
     else:
@@ -212,12 +256,9 @@ def remove_password(website : str, user_id : int,  passwords : dict):
     website = website.lower().strip()
     try:
         del passwords[website]
-        # getting full password file
-        passwords_file = os.path.join('passwords', 'passwords.json')
-        user_passwords = get_json(passwords_file)
-        # saving new entry in full password file
-        user_passwords[user_id] = passwords
-        write_json(passwords_file, user_passwords)
+        # updating password file
+        update_passwords(user_id, passwords)
+
         return passwords
     except KeyError:
         return False
@@ -248,55 +289,62 @@ def signup(fullname : str, username : str, password : str):
     otherwise. 
     '''
 
-    stored_users = get_json('master_passwords.json') # getting currently stored users
+    # building master passwords and user passwords file paths
+    passwords_file = os.path.join('passwords', 'passwords.json')
+    master_file = os.path.join('master', 'master_passwords.json')
+
+    # retrieving or creating master password file
+    if os.path.exists(master_file):
+        stored_users = get_json(master_file) # retrieving currently stored users
+    else:
+        stored_users = {}
 
     # checking if the username is unique
     if username not in stored_users.keys():
         user_id = len(stored_users) # generating a user id
         hashed_password = hash_password(password)   # hashing the chosen password
+        passwords = list()  # list to store all users passwords
 
         # building key file name for user
         key_dir = 'keys'
         key_filename = f'encryption_key_{user_id}.key'
         key_file = os.path.join(key_dir, key_filename)
-        passwords_file = os.path.join('passwords', 'passwords.json')
-        master_file = os.path.join('master', 'master_passwords.json')
-        passwords = list()
-        # data to be added to master passwords file
+        
+        # creating user data for master passwords file
         user_data = {
             'user_id' : user_id, 
             'full_name' : fullname, 
             'password' : hashed_password,
             'key_file' : key_file, 
             } 
-
         # adding user to the list of known users
         stored_users[username] = user_data
-        # generating a key to encrypt passwords for this user
-        key = generate_key()
 
         # making key directory if it doesn't exist
-        if not os.path.exists('keys'):
-            os.makedirs('keys')
+        if not os.path.exists(key_dir):
+            os.makedirs(key_dir)
+        # generating a key to encrypt passwords for this user
+        key = generate_key()
+        # writing key file for 
+        with open(key_file, 'wb') as file:
+            file.write(key)
 
         # making password directory if it doesn't exist
         if not os.path.exists('passwords'):
-            os.makedirs('passwords')
+            os.makedirs("passwords")
         else:
-            passwords = get_json(passwords_file)
+            if os.path.exists(passwords_file):
+                passwords = get_json(passwords_file)
+        # adding new passwords entry for user
         passwords.append(dict())
         write_json(passwords_file, passwords)
 
         # making master password directory if it doesn't exist
         if not os.path.exists('master'):
             os.makedirs('master')
-
         # writing new dict of known users
         write_json(master_file, stored_users)
 
-        # writing key file for 
-        with open(key_file, 'wb') as file:
-            file.write(key)
         return True
     else:
         return False

@@ -2,6 +2,9 @@ import views
 import models
 import controllers
 
+'''
+TODO: allow excel files to be imported of websites with usernames and passwords
+'''
 def main():
     model = models.Model()
     view = views.View()

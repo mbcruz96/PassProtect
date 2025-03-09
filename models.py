@@ -94,9 +94,15 @@ class PasswordModel(AuthModel):
             self.num_passwords += 1
             return True
 
+    def import_passwords(self, file_path):
+        self.passwords = pm.import_passwords(file_path, self.current_id, self.key, self.current_user_passwords)
+        
     def get_password(self, website):
         pm.get_password(website, self.key, self.current_user_passwords)
 
+    def get_username(self, website):
+        pm.get_username(website, self.key, self.current_user_passwords)
+        
     def change_password(self, website, old_password, new_password, confirm_password):
         changed = pm.change_password(website, old_password, new_password, confirm_password, self.current_id, self.key, self.current_user_passwords)
         if changed is None:

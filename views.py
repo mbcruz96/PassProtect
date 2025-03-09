@@ -138,12 +138,21 @@ class SignUpView(tk.Frame):
             command=self.on_signup
         ).grid(row=5, column=1, padx=0, pady=10, sticky='w')
        
+        self.back_btn = tk.Button(
+           self, 
+            text='Back',
+            command=self.on_back
+       ).grid(row=6, column=1, padx=0, pady=10, sticky='w')
+        
         # error messages
         self.signup_err_msg = tk.Label(self, text='Username already exists, choose another.', fg='red')
         self.agree_err_msg = tk.Label(self, text='Accept terms and conditions to continue.', fg='red')
 
     def on_signup(self):
         EventListener.trigger_event('on_signup', self)
+    
+    def on_back(self):
+        EventListener.trigger_event('on_back', self)
 
 class HomeView(tk.Frame):
     def __init__(self, *args, **kwargs):
@@ -153,10 +162,13 @@ class HomeView(tk.Frame):
         self.grid_columnconfigure(1, weight=1)
 
         self.header = tk.Label(self, text='Passprotect').pack()
-        self.listbox = tk.Listbox(self).pack()
 
+        #self.scrollbar = tk.Scrollbar(self).pack(side=tk.RIGHT, fill=tk.Y)
+        self.listbox = tk.Listbox(self).pack()
+        
         self.popup_menu = tk.Menu(self, tearoff=0)
-        self.popup_menu.add_command(label='Get Password', command=self.on_select)
+        self.popup_menu.add_command(label='Get Username', command=self.get_username)
+        self.popup_menu.add_command(label='Get Password', command=self.get_password)
         self.popup_menu.add_command(label='Change Password', command=self.to_change)
         self.popup_menu.add_command(label='Remove', command=self.on_remove)
 
@@ -173,21 +185,30 @@ class HomeView(tk.Frame):
             command=self.to_change
         ).pack(padx=0, pady=10)
         '''
-
+        # add password button
         self.add_btn = tk.Button(
             self, 
             text='Add Password', 
             command=self.to_add
         ).pack(padx=0, pady=10)
 
+        # logout of account button
         self.logout_btn = tk.Button(
             self, 
             text='Logout', 
             command=self.on_logout
             ).pack(padx=0, pady=10)
         
-    def on_select(self):
-        EventListener.trigger_event('on_select', self)
+        # confirmation messages
+        self.password_copied = tk.Label(self, text='Password copied to clipboard')
+        self.username_copied = tk.Label(self, text='Username copied to clipboard')
+
+    # event triggers for popup menu and buttons
+    def get_username(self):
+        EventListener.trigger_event('get_username', self)
+
+    def get_password(self):
+        EventListener.trigger_event('get_password', self)
 
     def to_change(self):
         EventListener.trigger_event('to_change', self)
@@ -246,16 +267,26 @@ class AddView(tk.Frame):
             command=self.on_add
         ).grid(row=4, column=1, padx=0, pady=10, sticky='w')
 
+        
+        self.import_btn = tk.Button(
+            self, 
+            text='Import Passwords',
+            command=self.on_import
+        ).grid(row=5, column=1, padx=0, pady=10, sticky='w')
+
         self.back_btn = tk.Button(
             self, 
             text='Back', 
             command=self.on_back
-        ).grid(row=5, column=1, padx=0, pady=10, sticky='w')
+        ).grid(row=6, column=1, padx=0, pady=10, sticky='w')
         
         self.err_msg = tk.Label(self, text='A password already exists for this website', fg='red')
 
     def on_add(self):
         EventListener.trigger_event('add_password', self)
+
+    def on_import(self):
+        EventListener.trigger_event('on_import', self)
 
     def on_back(self):
         EventListener.trigger_event('on_back', self)
@@ -291,7 +322,7 @@ class ChangeView(tk.Frame):
             self, 
             text='Back', 
             command=self.on_back
-        ).grid(row=5, column=1, padx=0, pady=10, sticky='w')
+        ).grid(row=6, column=1, padx=0, pady=10, sticky='w')
 
         self.incorrect_err_msg = tk.Label(self, text='Previous password incorrect', fg='red')
         self.mismatch_err_msg = tk.Label(self, text='New passwords do not match', fg='red')
