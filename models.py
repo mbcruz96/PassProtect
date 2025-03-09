@@ -83,8 +83,8 @@ class PasswordModel(AuthModel):
         super().__init__()
         self.num_passwords = 0
     
-    def add_password(self, website, username, password):
-        passwords = pm.add_password(website, username, password, self.current_id, self.key, self.current_user_passwords)
+    def add_password(self, website, username, password, url):
+        passwords = pm.add_password(website, username, password, url, self.current_id, self.key, self.current_user_passwords)
         if passwords is None:
             return False
         else:
@@ -102,7 +102,7 @@ class PasswordModel(AuthModel):
 
     def get_username(self, website):
         pm.get_username(website, self.key, self.current_user_passwords)
-        
+
     def change_password(self, website, old_password, new_password, confirm_password):
         changed = pm.change_password(website, old_password, new_password, confirm_password, self.current_id, self.key, self.current_user_passwords)
         if changed is None:
@@ -123,6 +123,9 @@ class PasswordModel(AuthModel):
 
     def get_websites(self):
         return pm.get_websites(self.current_user_passwords)
+    
+    def open_url(self, website):
+        return pm.open_url(website, self.current_user_passwords)
 
 
 

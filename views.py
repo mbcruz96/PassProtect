@@ -158,18 +158,20 @@ class HomeView(tk.Frame):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.grid_columnconfigure(0, weight=0)
+        self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure(2, weight=1)
 
         self.header = tk.Label(self, text='Passprotect').pack()
 
         #self.scrollbar = tk.Scrollbar(self).pack(side=tk.RIGHT, fill=tk.Y)
-        self.listbox = tk.Listbox(self).pack()
+        self.listbox = tk.Listbox(self).pack(expand=True, fill='both')
         
         self.popup_menu = tk.Menu(self, tearoff=0)
         self.popup_menu.add_command(label='Get Username', command=self.get_username)
         self.popup_menu.add_command(label='Get Password', command=self.get_password)
         self.popup_menu.add_command(label='Change Password', command=self.to_change)
+        self.popup_menu.add_command(label='Open URL', command=self.open_url)
         self.popup_menu.add_command(label='Remove', command=self.on_remove)
 
         '''
@@ -203,6 +205,9 @@ class HomeView(tk.Frame):
         self.password_copied = tk.Label(self, text='Password copied to clipboard')
         self.username_copied = tk.Label(self, text='Username copied to clipboard')
 
+        # error messages 
+        self.url_err = tk.Label(self, text='No URL available for website', fg='red')
+
     # event triggers for popup menu and buttons
     def get_username(self):
         EventListener.trigger_event('get_username', self)
@@ -212,6 +217,9 @@ class HomeView(tk.Frame):
 
     def to_change(self):
         EventListener.trigger_event('to_change', self)
+
+    def open_url(self):
+        EventListener.trigger_event('open_url', self)
 
     def on_remove(self):
         EventListener.trigger_event('on_remove', self)
@@ -253,32 +261,36 @@ class AddView(tk.Frame):
         self.website = tk.StringVar()
         self.username = tk.StringVar()
         self.password = tk.StringVar()
+        self.url = tk.StringVar()
 
         self.website_label = tk.Label(self, text='Website').grid(row=1, column=0, padx=10, sticky='w')
         self.uname_label = tk.Label(self, text='Username').grid(row=2, column=0, padx=10, sticky='w')
         self.passw_label = tk.Label(self, text='Password').grid(row=3, column=0, padx=10, sticky='w')
+        self.url_label = tk.Label(self, text='URL (optional)').grid(row=4, column=0, padx=10, sticky='w')
+        
         self.website_entry = tk.Entry(self, textvariable=self.website).grid(row=1, column=1, padx=(0,20), sticky='ew')
         self.uname_entry = tk.Entry(self, textvariable=self.username).grid(row=2, column=1, padx=(0,20), sticky='ew')
         self.passw_entry = tk.Entry(self, textvariable=self.password, show='*').grid(row=3, column=1, padx=(0,20), sticky='ew')
+        self.url_entry = tk.Entry(self, textvariable=self.url).grid(row=4, column=1, padx=(0,20), sticky='ew')
 
         self.add_btn = tk.Button(
             self, 
             text='Add',
             command=self.on_add
-        ).grid(row=4, column=1, padx=0, pady=10, sticky='w')
+        ).grid(row=5, column=1, padx=0, pady=10, sticky='w')
 
         
         self.import_btn = tk.Button(
             self, 
             text='Import Passwords',
             command=self.on_import
-        ).grid(row=5, column=1, padx=0, pady=10, sticky='w')
+        ).grid(row=6, column=1, padx=0, pady=10, sticky='w')
 
         self.back_btn = tk.Button(
             self, 
             text='Back', 
             command=self.on_back
-        ).grid(row=6, column=1, padx=0, pady=10, sticky='w')
+        ).grid(row=7, column=1, padx=0, pady=10, sticky='w')
         
         self.err_msg = tk.Label(self, text='A password already exists for this website', fg='red')
 

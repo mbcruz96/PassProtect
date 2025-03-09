@@ -27,6 +27,7 @@ class Controller:
         EventListener.add_listener('on_signup', self.on_signup)
         EventListener.add_listener('get_password', self.get_password)
         EventListener.add_listener('get_username', self.get_username)
+        EventListener.add_listener('open_url', self.open_url)
         EventListener.add_listener('to_add', self.to_add)
         EventListener.add_listener('add_password', self.add_password)
         EventListener.add_listener('on_import', self.on_import)
@@ -77,6 +78,13 @@ class Controller:
 
     def get_username(self, frame):
         self.frame = self.home_controller.get_username(frame)
+        try:
+            self._bind(self.frame)
+        except KeyError:
+            pass
+    
+    def open_url(self, frame):
+        self.frame = self.home_controller.open_url(frame)
         try:
             self._bind(self.frame)
         except KeyError:
@@ -228,7 +236,8 @@ class HomeController:
         # removing confirmation messages if present on view
         frame.children['!label2'].pack_forget()
         frame.children['!label3'].pack_forget()
-        
+        frame.children['!label4'].pack_forget()
+
         # retrieving active website
         website = frame.children['!listbox'].get(tk.ACTIVE)
         # copying password to clipboard
@@ -241,7 +250,8 @@ class HomeController:
         # removing confirmation messages if present on view
         frame.children['!label2'].pack_forget()
         frame.children['!label3'].pack_forget()
-        
+        frame.children['!label4'].pack_forget()
+
         # retrieving active website
         website = frame.children['!listbox'].get(tk.ACTIVE)
         # copying username to clipboard
@@ -250,11 +260,26 @@ class HomeController:
         frame.children['!label3'].pack()
         return frame
     
+    def open_url(self, frame):
+        # removing confirmation messages if present on view
+        frame.children['!label2'].pack_forget()
+        frame.children['!label3'].pack_forget()
+        frame.children['!label4'].pack_forget()
+
+        # retrieving active website
+        website = frame.children['!listbox'].get(tk.ACTIVE)
+        # copying username to clipboard
+        opened = self.model.base_model.open_url(website)
+        if opened == False:
+            frame.children['!label4'].pack()
+        return frame
+    
     def change(self, frame):
         # removing confirmation messages if present on view
         frame.children['!label2'].pack_forget()
         frame.children['!label3'].pack_forget()
-        
+        frame.children['!label4'].pack_forget()
+
         # retrieving active listbox selection
         website = frame.children['!listbox'].get(tk.ACTIVE)
         # switching to change password view
@@ -267,6 +292,7 @@ class HomeController:
         # removing confirmation messages if present on view
         frame.children['!label2'].pack_forget()
         frame.children['!label3'].pack_forget()
+        frame.children['!label4'].pack_forget()
         
         # retrieving selected website
         website = frame.children['!listbox'].get(tk.ACTIVE)
@@ -289,7 +315,8 @@ class HomeController:
         # removing confirmation messages if present on view
         frame.children['!label2'].pack_forget()
         frame.children['!label3'].pack_forget()
-        
+        frame.children['!label4'].pack_forget()
+
         # switching to add password view
         new_frame = self.view.switch('add')
         return new_frame
@@ -298,7 +325,8 @@ class HomeController:
         # removing confirmation messages if present on view
         frame.children['!label2'].pack_forget()
         frame.children['!label3'].pack_forget()
-        
+        frame.children['!label4'].pack_forget()
+
         # switching to login view
         new_frame = self.view.switch('login')
         return new_frame
@@ -320,17 +348,19 @@ class AddController:
     
     def add(self, frame):
         # removing error label if added to view
-        frame.children['!label5'].grid_forget()
+        frame.children['!label6'].grid_forget()
         # getting form entries
         username = frame.username.get()
         password = frame.password.get()
         website = frame.website.get()
+        url = frame.url.get()
+
         # adding password and storing correctly added flag
-        password_added = self.model.base_model.add_password(website, username, password)
+        password_added = self.model.base_model.add_password(website, username, password, url)
         
         # if password was not added block
         if password_added is False:
-            frame.children['!label5'].pack()
+            frame.children['!label6'].pack()
         # password added block
         else:
             # clearing entries in form
@@ -348,6 +378,7 @@ class AddController:
 
     def import_passwords(self, frame):
         # starting file selection popup
+        frame.children['!label6'].grid_forget()
         filename = filedialog.askopenfilename(
             title='Select a file',
             filetypes=(('CSV', "*.csv"),

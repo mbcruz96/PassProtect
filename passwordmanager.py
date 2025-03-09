@@ -3,6 +3,7 @@ import json
 import pandas as pd
 import hashlib
 import pyperclip
+import webbrowser
 import os
 from cryptography.fernet import Fernet
 '''
@@ -138,7 +139,7 @@ def get_key(file_path : str):
         print('Key file can not be found')
     # initializing and returning encryption cipher
     
-def add_password(website : str, username : str, password : str, user_id: int, key : Fernet, passwords : dict):
+def add_password(website : str, username : str, password : str, url : str,  user_id: int, key : Fernet, passwords : dict):
     '''
     - function adds a password to a dictionary of managed passwords
     - dictionary format passwords[user][website] = {'username': username, 'password': encrypted_password}
@@ -159,11 +160,19 @@ def add_password(website : str, username : str, password : str, user_id: int, ke
         # encrypting password
         enc_password = encrypt_password(password, key)
         # storing username and password to dictionary with lowercased website as key
-        entry = {
-            'username' : username,
-            'password' : enc_password,
-            'website' : website
-        }
+        if len(url) == 0:
+            entry = {
+                'username' : username,
+                'password' : enc_password,
+                'website' : website,
+            }
+        else:
+            entry = {
+                'username' : username,
+                'password' : enc_password,
+                'website' : website,
+                'url' : url,
+            }
         
         # saving new entry in user's passwords
         passwords[site] = entry
@@ -190,7 +199,7 @@ def import_passwords(file_path: str, user_id : int, key : Fernet, passwords: dic
             password = encrypt_password(row['Password'], key)
         else:
             continue
-        
+
         # creating password entry
         data = {
             'username' : row['Username'],
@@ -262,7 +271,16 @@ def remove_password(website : str, user_id : int,  passwords : dict):
         return passwords
     except KeyError:
         return False
-    
+
+def open_url(website : str, passwords : dict):
+    site = website.lower().strip()
+    if 'url' in passwords[site].keys():
+        url = passwords[site]['url']
+        webbrowser.open(url)
+        return True
+    else:
+        return False
+
 def login(username: str, password: str):
     '''
     Function accepts the username and password and authenticates a login attempt.
