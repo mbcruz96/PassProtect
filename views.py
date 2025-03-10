@@ -1,5 +1,6 @@
 import tkinter as tk
 
+# event listener
 class EventListener:
     '''
     Class to handle event listeners and trigger events
@@ -24,6 +25,7 @@ class EventListener:
         for callback in EventListener.event_listeners[event]:
             callback(frame)
 
+# root window
 class Root(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -40,6 +42,7 @@ class Root(tk.Tk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
+# master view
 class View:
     def __init__(self):
         super().__init__()
@@ -70,6 +73,7 @@ class View:
     def start_loop(self):
         self.root.mainloop()
 
+# login view
 class LoginView(tk.Frame):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -86,6 +90,7 @@ class LoginView(tk.Frame):
         # input entries
         self.uname_label = tk.Label(self, text="Username").grid(row=1, column=0, padx=10, sticky='w')
         self.passw_label = tk.Label(self, text="Password").grid(row=2, column=0, padx=10, sticky='w')
+        
         self.uname_entry = tk.Entry(self, textvariable=self.username, ).grid(row=1, column=1, padx=(0,20), sticky='ew')
         self.passw_entry = tk.Entry(self, textvariable=self.password, show='*').grid(row=2, column=1, padx=(0,20), sticky='ew')
 
@@ -116,6 +121,7 @@ class LoginView(tk.Frame):
     def to_signup(self):
         EventListener.trigger_event('to_signup', self)
 
+# signup view
 class SignUpView(tk.Frame):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -136,6 +142,7 @@ class SignUpView(tk.Frame):
         self.name_label = tk.Label(self, text='Full Name').grid(row=1, column=0, padx=10, sticky='w')
         self.uname_label = tk.Label(self, text='Username').grid(row=2, column=0, padx=10, sticky='w')
         self.passw_label = tk.Label(self, text='Password').grid(row=3, column=0, padx=10, sticky='w')
+        
         self.name_entry = tk.Entry(self, textvariable=self.fullname).grid(row=1, column=1, padx=(0,20), sticky='ew')
         self.uname_entry = tk.Entry(self, textvariable=self.username).grid(row=2, column=1, padx=(0,20), sticky='ew')
         self.passw_entry = tk.Entry(self, textvariable=self.password, show='*').grid(row=3, column=1, padx=(0,20), sticky='ew')
@@ -172,6 +179,7 @@ class SignUpView(tk.Frame):
     def on_back(self):
         EventListener.trigger_event('on_back', self)
 
+# home view
 class HomeView(tk.Frame):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -276,6 +284,7 @@ class HomeView(tk.Frame):
         self.logout_btn = tk.Button(self, text='Logout').grid(row=4, column=1, padx=0, pady=10, sticky='nsew')
         '''
         
+# add password view
 class AddView(tk.Frame):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -337,6 +346,7 @@ class AddView(tk.Frame):
     def on_back(self):
         EventListener.trigger_event('on_back', self)
 
+# change password viw
 class ChangeView(tk.Frame):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -353,10 +363,10 @@ class ChangeView(tk.Frame):
         self.confirm_password = tk.StringVar()
 
         # input entries
-        self.website = tk.Label(self, text='Change Password').grid(row=0, column=0, columnspan=2, padx=10, pady=10)
         self.old_password_label = tk.Label(self, text='Previous Password').grid(row=1, column=0, padx=10, sticky='w')
         self.new_password_label = tk.Label(self, text='New Password').grid(row=2, column=0, padx=10, sticky='w')
         self.confirm_password_label = tk.Label(self, text='Confirm Password').grid(row=3, column=0, padx=10, sticky='w')
+        
         self.website_entry = tk.Entry(self, textvariable=self.old_password, show='*').grid(row=1, column=1, padx=(0,20), sticky='ew')
         self.uname_entry = tk.Entry(self, textvariable=self.new_password, show='*').grid(row=2, column=1, padx=(0,20), sticky='ew')
         self.passw_entry = tk.Entry(self, textvariable=self.confirm_password, show='*').grid(row=3, column=1, padx=(0,20), sticky='ew')

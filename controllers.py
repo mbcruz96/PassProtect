@@ -5,6 +5,7 @@ import views
 from views import EventListener
 import models
 
+# master controller
 class Controller:
     def __init__(self, model:models.Model, view:views.View):
         self.view = view
@@ -436,6 +437,7 @@ class AddController:
         new_frame = self.populate(new_frame)
         return new_frame
     
+# controller for change password view
 class ChangeController:
     def __init__(self, model, view):
         # initializing model and view 
