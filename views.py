@@ -7,12 +7,18 @@ class EventListener:
     event_listeners = {}
   
     def add_listener(event, callback):
+        '''
+        Function adds a listener and callback function for a specific event 
+        '''
         try:
             EventListener.event_listeners[event].append(callback)
         except KeyError:
             EventListener.event_listeners[event] = [callback,]
 
     def trigger_event(event, frame):
+        '''
+        Function triggers an event and transfers control to associated callback function
+        '''
         if event not in EventListener.event_listeners.keys():
             return
         for callback in EventListener.event_listeners[event]:
@@ -22,6 +28,7 @@ class Root(tk.Tk):
     def __init__(self):
         super().__init__()
 
+        # initialing root window attributes
         start_width = 500
         min_width = 400
         start_height = 400
@@ -36,8 +43,9 @@ class Root(tk.Tk):
 class View:
     def __init__(self):
         super().__init__()
-        self.root = Root()
-        self.current_view = None
+        self.root = Root()  # root window
+        self.current_view = None    # currently active view
+        # view functors
         self.frames = {
             'login' : LoginView,
             'signup' : SignUpView,
@@ -47,7 +55,12 @@ class View:
         }
 
     def switch(self, view):
+        '''
+        Function destroys active view and raises the specified view
+        '''
+        # initializing new view
         frame = self.frames[view](self.root)
+        # destroying active view if one exists
         if self.current_view is not None:
             self.current_view.destroy()
         self.current_view = frame
@@ -83,7 +96,9 @@ class LoginView(tk.Frame):
             command=self.on_login
         ).grid(row=3, column=1, padx=0, pady=10, sticky='w')
         
+        # signup label
         self.signup_label = tk.Label(self, text="Don't have an account?").grid(row=4, column=1, sticky='w')
+        # signup button
         self.signup_btn = tk.Button(
             self, 
             text="Sign Up", 
@@ -94,6 +109,7 @@ class LoginView(tk.Frame):
         self.password_err_msg = tk.Label(self, text='Incorrect username/password, try again.', fg='red')
         self.signup_err_msg = tk.Label(self, text='Sign up to continue', fg='red')
     
+    # button event triggers
     def on_login(self):
         EventListener.trigger_event('on_login', self)
     
@@ -138,6 +154,7 @@ class SignUpView(tk.Frame):
             command=self.on_signup
         ).grid(row=5, column=1, padx=0, pady=10, sticky='w')
        
+       # back button
         self.back_btn = tk.Button(
            self, 
             text='Back',
@@ -148,6 +165,7 @@ class SignUpView(tk.Frame):
         self.signup_err_msg = tk.Label(self, text='Username already exists, choose another.', fg='red')
         self.agree_err_msg = tk.Label(self, text='Accept terms and conditions to continue.', fg='red')
 
+    # button event triggers
     def on_signup(self):
         EventListener.trigger_event('on_signup', self)
     
@@ -162,11 +180,20 @@ class HomeView(tk.Frame):
         self.grid_columnconfigure(1, weight=1)
         self.grid_columnconfigure(2, weight=1)
 
-        self.header = tk.Label(self, text='Passprotect').pack()
+        #self.header = tk.Label(self, text='Websites').pack()
 
-        #self.scrollbar = tk.Scrollbar(self).pack(side=tk.RIGHT, fill=tk.Y)
-        self.listbox = tk.Listbox(self).pack(expand=True, fill='both')
+        # logout menu
+        self.menu_bar = tk.Menu(self,tearoff=1)
+        self.logout_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.logout_menu.add_command(label='Logout', command=self.on_logout)
+        self.menu_bar.add_cascade(label='Exit', menu=self.logout_menu)
+        args[0].config(menu=self.menu_bar)
         
+        # user website listbox
+        self.listbox = tk.Listbox(self).pack(expand=True, fill='both')
+        self.scrollbar = tk.Scrollbar(self.listbox)
+
+        # website event popup menu
         self.popup_menu = tk.Menu(self, tearoff=0)
         self.popup_menu.add_command(label='Get Username', command=self.get_username)
         self.popup_menu.add_command(label='Get Password', command=self.get_password)
@@ -256,13 +283,16 @@ class AddView(tk.Frame):
         self.grid_columnconfigure(0, weight=0)
         self.grid_columnconfigure(1, weight=1)
 
+        # header
         self.header = tk.Label(self, text='Add Password').grid(row=0, column=0, columnspan=2, padx=10, pady=10)
         
+        # input variables
         self.website = tk.StringVar()
         self.username = tk.StringVar()
         self.password = tk.StringVar()
         self.url = tk.StringVar()
 
+        # input entries
         self.website_label = tk.Label(self, text='Website').grid(row=1, column=0, padx=10, sticky='w')
         self.uname_label = tk.Label(self, text='Username').grid(row=2, column=0, padx=10, sticky='w')
         self.passw_label = tk.Label(self, text='Password').grid(row=3, column=0, padx=10, sticky='w')
@@ -273,27 +303,31 @@ class AddView(tk.Frame):
         self.passw_entry = tk.Entry(self, textvariable=self.password, show='*').grid(row=3, column=1, padx=(0,20), sticky='ew')
         self.url_entry = tk.Entry(self, textvariable=self.url).grid(row=4, column=1, padx=(0,20), sticky='ew')
 
+        # add website/password button
         self.add_btn = tk.Button(
             self, 
             text='Add',
             command=self.on_add
         ).grid(row=5, column=1, padx=0, pady=10, sticky='w')
 
-        
+        # import CSV of passwords button
         self.import_btn = tk.Button(
             self, 
             text='Import Passwords',
             command=self.on_import
         ).grid(row=6, column=1, padx=0, pady=10, sticky='w')
 
+        # back button
         self.back_btn = tk.Button(
             self, 
             text='Back', 
             command=self.on_back
         ).grid(row=7, column=1, padx=0, pady=10, sticky='w')
         
+        # error message
         self.err_msg = tk.Label(self, text='A password already exists for this website', fg='red')
 
+    # button event triggers
     def on_add(self):
         EventListener.trigger_event('add_password', self)
 
@@ -310,12 +344,15 @@ class ChangeView(tk.Frame):
         self.grid_columnconfigure(0, weight=0)
         self.grid_columnconfigure(1, weight=1)
 
+        # header
         self.header = tk.Label(self, text='Change Password').grid(row=0, column=0, columnspan=2, padx=10, pady=10)
         
+        # input variables
         self.old_password = tk.StringVar()
         self.new_password = tk.StringVar()
         self.confirm_password = tk.StringVar()
 
+        # input entries
         self.website = tk.Label(self, text='Change Password').grid(row=0, column=0, columnspan=2, padx=10, pady=10)
         self.old_password_label = tk.Label(self, text='Previous Password').grid(row=1, column=0, padx=10, sticky='w')
         self.new_password_label = tk.Label(self, text='New Password').grid(row=2, column=0, padx=10, sticky='w')
@@ -324,22 +361,25 @@ class ChangeView(tk.Frame):
         self.uname_entry = tk.Entry(self, textvariable=self.new_password, show='*').grid(row=2, column=1, padx=(0,20), sticky='ew')
         self.passw_entry = tk.Entry(self, textvariable=self.confirm_password, show='*').grid(row=3, column=1, padx=(0,20), sticky='ew')
 
+        # confirm change button
         self.confirm_btn = tk.Button(
             self, 
             text='Confirm',
             command=self.on_change
         ).grid(row=4, column=1, padx=0, pady=10, sticky='w')
 
+        # back button
         self.back_btn = tk.Button(
             self, 
             text='Back', 
             command=self.on_back
         ).grid(row=6, column=1, padx=0, pady=10, sticky='w')
 
+        # error messages
         self.incorrect_err_msg = tk.Label(self, text='Previous password incorrect', fg='red')
         self.mismatch_err_msg = tk.Label(self, text='New passwords do not match', fg='red')
 
-
+    # button event triggers
     def on_change(self):
         EventListener.trigger_event('on_change', self)
 

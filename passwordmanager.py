@@ -117,6 +117,9 @@ def write_json(filename : str, data : dict):
         json.dump(data, file)
 
 def update_passwords(user_id: int, updated_passwords: dict):
+    '''
+    Function updates the entry for a users stored passwords with updates
+    '''
     # getting full password file
     passwords_file = os.path.join('passwords', 'passwords.json')
     user_passwords = get_json(passwords_file)
@@ -217,17 +220,31 @@ def import_passwords(file_path: str, user_id : int, key : Fernet, passwords: dic
     return passwords
     
 def get_password(website : str, key : Fernet, passwords : dict):
+    '''
+    Function takes a website and copies the stored password associated with the website in the
+    users clipboard
+    '''
+    # cleaning website name 
     site = website.lower().strip()
 
+    # checking if website is stored in the users stored passwords
     if site in passwords.keys():
+        # retrieving the encrypted password
         enc_password = passwords[site]['password']
+        # decrypting the password
         dec_password = decrypt_password(enc_password, key)
+        # copying the decrypted password into the users clipboard
         pyperclip.copy(dec_password)
         print('Password saved to clipboard')
+    # website not found in stored passwords block
     else:
         print('A password does not exist for the given website')
 
 def get_username(website: str, key : Fernet, passwords: dict):
+    '''
+    Function takes a website and copies the stored username associated with the website in the
+    users clipboard
+    '''
     site = website.lower().strip()
 
     if site in passwords.keys():
@@ -236,10 +253,17 @@ def get_username(website: str, key : Fernet, passwords: dict):
         print('username copied')
 
 def get_websites(passwords : dict):
+    '''
+    Function returns all of the users stored website names
+    '''
+    # initializing list of webistes
     websites = []
+    # checking if user has any websites stored
     if len(passwords) == 0:
         return websites
+    # user has stored websites block
     for website in passwords.keys():
+        # adding each website to list of websites
         websites.append(passwords[website]['website'])
     return websites
 
@@ -273,11 +297,19 @@ def remove_password(website : str, user_id : int,  passwords : dict):
         return False
 
 def open_url(website : str, passwords : dict):
+    '''
+    Function opens the URL associated with a website in a web browser
+    '''
+    # cleaning website name
     site = website.lower().strip()
+    # checking if the website has a url stored for it
     if 'url' in passwords[site].keys():
+        # retrieving url
         url = passwords[site]['url']
+        # opening website in browser
         webbrowser.open(url)
         return True
+    # no url found for website block
     else:
         return False
 
@@ -285,18 +317,27 @@ def login(username: str, password: str):
     '''
     Function accepts the username and password and authenticates a login attempt.
     '''
+    # creating the path for the registered users data
     master_file = os.path.join('master', 'master_passwords.json')
+    # retrieving data of stored users
     stored_users = get_json(master_file)
+    # checking if any users are registered to the system
     if len(stored_users) == 0:
         return None
+    # registered users exist block
     else:
-        hashed_password = hash_password(password)
         if username in stored_users.keys():
+             # hashing user password
+            hashed_password = hash_password(password)
+            # retrieving stored username
             user = stored_users[username]
+            # checking if the hashed password matches the stored hashed password in the system
             if hashed_password == user['password']: 
                 return True
+            # passowrds don't match block
             else:
                 return False
+        # username not found in registered users block
         else:
             return False
 
@@ -311,17 +352,22 @@ def signup(fullname : str, username : str, password : str):
     passwords_file = os.path.join('passwords', 'passwords.json')
     master_file = os.path.join('master', 'master_passwords.json')
 
-    # retrieving or creating master password file
+    # retrieving or creating registered users data file
     if os.path.exists(master_file):
-        stored_users = get_json(master_file) # retrieving currently stored users
+        # retrieving currently stored users
+        stored_users = get_json(master_file) 
+    # register user data file not created yet block
     else:
         stored_users = {}
 
     # checking if the username is unique
     if username not in stored_users.keys():
-        user_id = len(stored_users) # generating a user id
-        hashed_password = hash_password(password)   # hashing the chosen password
-        passwords = list()  # list to store all users passwords
+         # generating a user id
+        user_id = len(stored_users)
+         # hashing user password
+        hashed_password = hash_password(password)  
+        # list to store all system passwords for all users
+        passwords = list()  
 
         # building key file name for user
         key_dir = 'keys'
@@ -335,26 +381,30 @@ def signup(fullname : str, username : str, password : str):
             'password' : hashed_password,
             'key_file' : key_file, 
             } 
-        # adding user to the list of known users
+        # adding user to the list of registered users
         stored_users[username] = user_data
 
         # making key directory if it doesn't exist
         if not os.path.exists(key_dir):
             os.makedirs(key_dir)
-        # generating a key to encrypt passwords for this user
+        # generating a key to encrypt passwords for the current user
         key = generate_key()
-        # writing key file for 
+        # writing key file for the current user
         with open(key_file, 'wb') as file:
             file.write(key)
 
         # making password directory if it doesn't exist
         if not os.path.exists('passwords'):
             os.makedirs("passwords")
+        # password file for all users already exists block
         else:
+            # checking if password file for all users exists
             if os.path.exists(passwords_file):
+                # retrieving the password file
                 passwords = get_json(passwords_file)
         # adding new passwords entry for user
         passwords.append(dict())
+        # saving the password file
         write_json(passwords_file, passwords)
 
         # making master password directory if it doesn't exist
@@ -364,6 +414,7 @@ def signup(fullname : str, username : str, password : str):
         write_json(master_file, stored_users)
 
         return True
+    # username not unique block
     else:
         return False
     

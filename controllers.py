@@ -40,14 +40,16 @@ class Controller:
     def _bind(self, frame):
         frame.children['!listbox'].bind('<ButtonRelease-1>', self.on_popup)
 
-    
+    # event listener callback functions
     def on_popup(self, event):
+        # binds clicking on a website with the popup menu appearing by the selected website
         try:
             self.frame.children['!menu'].post(event.x_root, event.y_root)
         finally:
             self.frame.children['!menu'].grab_release()
 
     def on_login(self, frame):
+        # triggered when user attempts to login
         self.frame = self.login_controller.login(frame)
         try:
             self._bind(self.frame)
@@ -55,13 +57,16 @@ class Controller:
             pass
 
     def on_logout(self, frame):
+        # triggered when user logs out
         self.frame = self.home_controller.logout(frame)
 
     def to_signup(self, frame):
+        # triggered when user hits signup button on login view
         self.frame = self.login_controller.signup(frame)
         self.prev_frame = 'login'
     
     def on_signup(self, frame):
+        # triggered when user hits signup button on signup view
         self.frame = self.signup_controller.signup(frame)
         try:
             self._bind(self.frame)
@@ -70,6 +75,7 @@ class Controller:
             pass
 
     def get_password(self, frame):
+        # triggered when get password option selected from popup menu
         self.frame = self.home_controller.get_password(frame)
         try:
             self._bind(self.frame)
@@ -77,6 +83,7 @@ class Controller:
             pass
 
     def get_username(self, frame):
+        # triggered when get username option selected from popup menu
         self.frame = self.home_controller.get_username(frame)
         try:
             self._bind(self.frame)
@@ -84,6 +91,7 @@ class Controller:
             pass
     
     def open_url(self, frame):
+        # triggered when open url option selected from popup menu
         self.frame = self.home_controller.open_url(frame)
         try:
             self._bind(self.frame)
@@ -91,10 +99,12 @@ class Controller:
             pass
 
     def to_add(self, frame):
+        # triggered when add password button is hit on home view
         self.frame = self.home_controller.add(frame)
         self.prev_frame = 'home'
 
     def add_password(self, frame):
+        # triggered when add button hit on add view
         self.frame = self.add_controller.add(frame)
         self.prev_frame = 'home'
         try:
@@ -103,7 +113,7 @@ class Controller:
             pass
 
     def on_import(self, frame):
-        # FINISH LINKING TO CHANGE CONTROLLER IMPORT_PASSWORDS FUNCTION
+        # triggered when import passwords button hit on add view
         self.frame = self.add_controller.import_passwords(frame)
         try:
             self._bind(self.frame)
@@ -112,10 +122,12 @@ class Controller:
             pass
 
     def to_change(self, frame):
+        # triggered when change password option selected from popup menu
         self.frame, self.website = self.home_controller.change(frame)
         self.prev_frame = 'home'
 
     def on_change(self, frame):
+        # triggered when confirm button hit on change view
         self.frame = self.change_controller.change(frame, self.website)
         try:
             self._bind(self.frame)
@@ -125,6 +137,7 @@ class Controller:
             pass
 
     def on_remove(self, frame):
+        # triggered when remove password option selected from popup menu
         self.frame = self.home_controller.remove(frame)
         try:
             self._bind(self.frame)
@@ -132,6 +145,7 @@ class Controller:
             pass
 
     def on_back(self, frame):
+        # triggered when any back buttons are hit
         if self.prev_frame == 'home':
             self.frame = self.add_controller.back(frame)
             try:
@@ -153,28 +167,40 @@ class Controller:
 # controller for login view
 class LoginController:
     def __init__(self, model, view):
+        # initializing model and view
         self.model = model
         self.view = view
     
     def signup(self, frame):
+        # switiching to signup view
         new_frame = self.view.switch('signup')
         return new_frame
     
     def login(self, frame):
+        # removing error messages from view
         frame.children['!label5'].grid_forget()
         frame.children['!label6'].grid_forget()
+        # retrieving user form entries
         username = frame.username.get()
         password = frame.password.get()
+        # authorizing user
         login = self.model.base_model.login(username, password)
+        # username/password incorrect block
         if login is False:
             frame.children['!label5'].grid(row=6, column=1, padx=0, pady=10, sticky='w')
+        # user not registered block
         elif login is None:
             frame.children['!label6'].grid(row=6, column=1, padx=0, pady=10, sticky='w')
+        # successful user authorization block
         else:
+           # removing user entries from forms
            frame.children['!entry'].delete(0, tk.END)
            frame.children['!entry2'].delete(0, tk.END)
+           # retrieving stored website for current user
            websites = self.model.base_model.get_websites()
+           # switching to home view
            new_frame = self.view.switch('home')
+           # populating listbox with the users stored websites
            for website in websites:
                new_frame.children['!listbox'].insert(tk.END, website.title())
            return new_frame
