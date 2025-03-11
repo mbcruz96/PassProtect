@@ -13,6 +13,7 @@ class Controller:
         self.frame = None
         self.prev_frame = None
         self.website = None
+        self.stored_passwords = False
 
         # initializing controllers
         self.signup_controller = SignupController(model, view)
@@ -41,25 +42,35 @@ class Controller:
     def _bind(self, frame):
         frame.children['!listbox'].bind('<ButtonRelease-1>', self.on_popup)
 
+    def _unbind(self, frame):
+        frame.children['!listbox'].unbind('<ButtonRelease-1>')
+
     # event listener callback functions
     def on_popup(self, event):
         # binds clicking on a website with the popup menu appearing by the selected website
         try:
-            self.frame.children['!menu'].post(event.x_root, event.y_root)
+            self.frame.children['!menu2'].post(event.x_root, event.y_root)
         finally:
-            self.frame.children['!menu'].grab_release()
+            self.frame.children['!menu2'].grab_release()
 
     def on_login(self, frame):
         # triggered when user attempts to login
-        self.frame = self.login_controller.login(frame)
-        try:
-            self._bind(self.frame)
-        except KeyError:
+        self.frame, self.stored_passwords = self.login_controller.login(frame)
+        if self.stored_passwords is False:
             pass
+        else:
+            try:
+                self._bind(self.frame)
+            except KeyError:
+                pass
 
     def on_logout(self, frame):
         # triggered when user logs out
         self.frame = self.home_controller.logout(frame)
+        try:
+            self._unbind(self.frame)
+        except KeyError:
+            pass
 
     def to_signup(self, frame):
         # triggered when user hits signup button on login view
@@ -68,12 +79,15 @@ class Controller:
     
     def on_signup(self, frame):
         # triggered when user hits signup button on signup view
-        self.frame = self.signup_controller.signup(frame)
-        try:
-            self._bind(self.frame)
-            self.prev_frame = None
-        except KeyError:
+        self.frame, self.stored_passwords = self.signup_controller.signup(frame)
+        if self.stored_passwords is False:
             pass
+        else:
+            try:
+                self._bind(self.frame)
+                self.prev_frame = None
+            except KeyError:
+                pass
 
     def get_password(self, frame):
         # triggered when get password option selected from popup menu
@@ -106,21 +120,30 @@ class Controller:
 
     def add_password(self, frame):
         # triggered when add button hit on add view
-        self.frame = self.add_controller.add(frame)
+        self.frame, self.stored_passwords = self.add_controller.add(frame)
         self.prev_frame = 'home'
-        try:
-            self._bind(self.frame)
-        except KeyError:
+        if self.stored_passwords is False:
             pass
+        else:
+            try:
+                self._bind(self.frame)
+            except KeyError:
+                pass
 
     def on_import(self, frame):
         # triggered when import passwords button hit on add view
-        self.frame = self.add_controller.import_passwords(frame)
-        try:
-            self._bind(self.frame)
-            self.prev_frame = None
-        except KeyError:
-            pass
+        self.frame, self.stored_passwords = self.add_controller.import_passwords(frame)
+        if self.stored_passwords is False:
+            try:
+                self._unbind(self.frame)
+            except KeyError:
+                pass
+        else:
+            try:
+                self._bind(self.frame)
+                self.prev_frame = None
+            except KeyError:
+                pass
 
     def to_change(self, frame):
         # triggered when change password option selected from popup menu
@@ -139,20 +162,32 @@ class Controller:
 
     def on_remove(self, frame):
         # triggered when remove password option selected from popup menu
-        self.frame = self.home_controller.remove(frame)
-        try:
-            self._bind(self.frame)
-        except KeyError:
-            pass
-
-    def on_back(self, frame):
-        # triggered when any back buttons are hit
-        if self.prev_frame == 'home':
-            self.frame = self.add_controller.back(frame)
+        self.frame, self.stored_passwords = self.home_controller.remove(frame)
+        if self.stored_passwords is False:
+            try:
+                self._unbind(self.frame)
+            except KeyError:
+                pass
+        else:
             try:
                 self._bind(self.frame)
             except KeyError:
                 pass
+
+    def on_back(self, frame):
+        # triggered when any back buttons are hit
+        if self.prev_frame == 'home':
+            self.frame, self.stored_passwords = self.add_controller.back(frame)
+            if self.stored_passwords is False:
+                try:
+                    self._unbind(self.frame)
+                except KeyError:
+                    pass
+            else:
+                try:
+                    self._bind(self.frame)
+                except KeyError:
+                    pass
         elif self.prev_frame == 'login':
             self.frame = self.signup_controller.back(frame)
         else:
@@ -194,18 +229,20 @@ class LoginController:
             frame.children['!label6'].grid(row=6, column=1, padx=0, pady=10, sticky='w')
         # successful user authorization block
         else:
-           # removing user entries from forms
-           frame.children['!entry'].delete(0, tk.END)
-           frame.children['!entry2'].delete(0, tk.END)
-           # retrieving stored website for current user
-           websites = self.model.base_model.get_websites()
-           # switching to home view
-           new_frame = self.view.switch('home')
-           # populating listbox with the users stored websites
-           for website in websites:
-               new_frame.children['!listbox'].insert(tk.END, website.title())
-           return new_frame
-        return frame
+            # removing user entries from forms
+            frame.children['!entry'].delete(0, tk.END)
+            frame.children['!entry2'].delete(0, tk.END)
+            # retrieving stored website for current user
+            websites = self.model.base_model.get_websites()
+            # switching to home view
+            new_frame = self.view.switch('home')
+            # populating listbox with the users stored websites
+            if len(websites) > 0:
+                for website in websites:
+                    new_frame.children['!listbox'].insert(tk.END, website.title())
+                return (new_frame, True)
+            else:
+               return (frame, False)
 
 # controller for signup view
 class SignupController:
@@ -235,12 +272,15 @@ class SignupController:
             else:
                 websites = self.model.base_model.get_websites()
                 new_frame = self.view.switch('home')
-                for website in websites:
-                    new_frame.children['!listbox'].insert(tk.END, website.title())
-                return new_frame
+                if len(websites) > 0:
+                    for website in websites:
+                        new_frame.children['!listbox'].insert(tk.END, website.title())
+                    return (new_frame, True)
+                else:
+                    return(new_frame, False)
         else:
             frame.children['!label6'].grid(row=7, column=1, padx=0, pady=10, sticky='w')
-        return frame
+        return (frame, False)
     
     def back(self, frame):
         # clearing form entries
@@ -336,8 +376,14 @@ class HomeController:
                 index = frame.children['!listbox'].curselection()
                 # removing website from lisbox of websites
                 frame.children['!listbox'].delete(index)
-        return frame
-    
+                num_items = frame.children['!listbox'].size()
+                if num_items > 0:
+                    return (frame, True)
+                else:
+                    return (frame, False)
+        else:
+            return (frame, True)
+        
     def add(self, frame):
         # removing confirmation messages if present on view
         frame.children['!label2'].pack_forget()
@@ -388,6 +434,7 @@ class AddController:
         # if password was not added block
         if password_added is False:
             frame.children['!label6'].pack()
+            return(frame, False)
         # password added block
         else:
             # clearing entries in form
@@ -399,9 +446,7 @@ class AddController:
             new_frame = self.view.switch('home')
             # populating listbox of websites
             new_frame = self.populate(new_frame)
-            return new_frame
-        
-        return frame
+            return (new_frame, True)
 
     def import_passwords(self, frame):
         # starting file selection popup
@@ -420,10 +465,10 @@ class AddController:
             new_frame = self.view.switch('home')
             # populating listbox of websites
             new_frame = self.populate(new_frame)
-            return new_frame
+            return (new_frame, True)
         else:
             # returning current frame if no file selected
-            return frame
+            return (frame, False)
     
     def back(self, frame):
         # clearing form entries
@@ -433,11 +478,18 @@ class AddController:
 
         # switching to home view
         new_frame = self.view.switch('home')
-        # populating listbox of websites
-        new_frame = self.populate(new_frame)
-        return new_frame
+
+        # getting list of current websites
+        websites = self.model.base_model.get_websites()
+        if len(websites) > 0:
+            # populating listbox of websites
+            for website in websites:
+                new_frame.children['!listbox'].insert(tk.END, website.title())
+            return (new_frame, True)
+        else:
+            return(new_frame, False)
     
-# controller for change password view
+# controller for change password
 class ChangeController:
     def __init__(self, model, view):
         # initializing model and view 

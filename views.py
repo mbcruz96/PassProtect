@@ -77,7 +77,6 @@ class View:
 class LoginView(tk.Frame):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         self.grid_columnconfigure(0, weight=0)
         self.grid_columnconfigure(1, weight=1)
         # header
@@ -188,17 +187,17 @@ class HomeView(tk.Frame):
         self.grid_columnconfigure(1, weight=1)
         self.grid_columnconfigure(2, weight=1)
 
-        #self.header = tk.Label(self, text='Websites').pack()
+        self.header = tk.Label(self, text='Websites').pack()
 
         # logout menu
-        self.menu_bar = tk.Menu(self,tearoff=1)
+        self.menu_bar = tk.Menu(self, tearoff=0)
         self.logout_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.logout_menu.add_command(label='Logout', command=self.on_logout)
         self.menu_bar.add_cascade(label='Exit', menu=self.logout_menu)
         args[0].config(menu=self.menu_bar)
-        
+
         # user website listbox
-        self.listbox = tk.Listbox(self).pack(expand=True, fill='both')
+        self.listbox = tk.Listbox(self).pack(padx=20, pady=20, expand=True, fill='both')
         self.scrollbar = tk.Scrollbar(self.listbox)
 
         # website event popup menu
