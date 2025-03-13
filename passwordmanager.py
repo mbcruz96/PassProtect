@@ -209,7 +209,6 @@ def import_passwords(file_path: str, user_id : int, key : Fernet, passwords: dic
             'password' : password,
             'website' : row['Name'],
             'url' : row['Website'],
-            'description' : row['Name'],
             'type' : row['Type'],
         }
         # saving entry in passwords dictionary

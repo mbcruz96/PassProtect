@@ -54,7 +54,8 @@ class View:
             'signup' : SignUpView,
             'home' : HomeView,
             'add' : AddView,
-            'change': ChangeView
+            'change': ChangeView,
+            'import': ImportView
         }
 
     def switch(self, view):
@@ -98,16 +99,16 @@ class LoginView(tk.Frame):
             self, 
             text="Submit", 
             command=self.on_login
-        ).grid(row=3, column=1, padx=0, pady=10, sticky='w')
+        ).grid(row=3, column=0, columnspan=2, padx=10, pady=10)
         
         # signup label
-        self.signup_label = tk.Label(self, text="Don't have an account?").grid(row=4, column=1, sticky='w')
+        self.signup_label = tk.Label(self, text="Don't have an account?").grid(row=4, column=0, columnspan=2, padx=10, pady=10)
         # signup button
         self.signup_btn = tk.Button(
             self, 
             text="Sign Up", 
             command=self.to_signup
-        ).grid(row=5, column=1, padx=0, pady=10, sticky='w')
+        ).grid(row=5, column=0, columnspan=2, padx=10, pady=10)
         
         # error messages
         self.password_err_msg = tk.Label(self, text='Incorrect username/password, try again.', fg='red')
@@ -127,6 +128,13 @@ class SignUpView(tk.Frame):
 
         self.grid_columnconfigure(0, weight=0)
         self.grid_columnconfigure(1, weight=1)
+        
+        left_arrow = "\u2190"
+
+        self.back_btn = tk.Button(
+            self, 
+            text=left_arrow + '  Back',
+            command=self.on_back).grid(row=0, column=0, sticky='w', padx=10, pady=20)
         
         # header
         self.header = tk.Label(self, text='Sign up').grid(row=0, column=0, columnspan=2, padx=10, pady=10)
@@ -151,22 +159,15 @@ class SignUpView(tk.Frame):
             self,   
             text='Agree to Terms and Conditions', 
             variable=self.agreed
-        ).grid(row=4, column=1, padx=0, pady=10, sticky='w')
+        ).grid(row=4, column=0, columnspan=2, padx=10, pady=10)
         
         # sign up button
         self.signup_btn = tk.Button(
             self, 
             text='Sign Up', 
             command=self.on_signup
-        ).grid(row=5, column=1, padx=0, pady=10, sticky='w')
+        ).grid(row=5, column=0, columnspan=2, padx=10, pady=10)
        
-       # back button
-        self.back_btn = tk.Button(
-           self, 
-            text='Back',
-            command=self.on_back
-       ).grid(row=6, column=1, padx=0, pady=10, sticky='w')
-        
         # error messages
         self.signup_err_msg = tk.Label(self, text='Username already exists, choose another.', fg='red')
         self.agree_err_msg = tk.Label(self, text='Accept terms and conditions to continue.', fg='red')
@@ -197,7 +198,7 @@ class HomeView(tk.Frame):
         args[0].config(menu=self.menu_bar)
 
         # user website listbox
-        self.listbox = tk.Listbox(self).pack(padx=20, pady=20, expand=True, fill='both')
+        self.listbox = tk.Listbox(self, font=("Arial", 18)).pack(padx=20, pady=20, expand=True, fill='both')
         self.scrollbar = tk.Scrollbar(self.listbox)
 
         # website event popup menu
@@ -291,56 +292,60 @@ class AddView(tk.Frame):
         self.grid_columnconfigure(0, weight=0)
         self.grid_columnconfigure(1, weight=1)
 
+        left_arrow = "\u2190"
+
+        self.back_btn = tk.Button(
+            self, 
+            text=left_arrow + '  Back',
+            command=self.on_back).grid(row=0, column=0, sticky='w', padx=10, pady=20)
+        
         # header
-        self.header = tk.Label(self, text='Add Password').grid(row=0, column=0, columnspan=2, padx=10, pady=10)
+        self.header = tk.Label(self, text='Add Password').grid(row=1, column=0, columnspan=2, padx=10, pady=10)
         
         # input variables
         self.website = tk.StringVar()
         self.username = tk.StringVar()
         self.password = tk.StringVar()
         self.url = tk.StringVar()
+        self.type = tk.StringVar()
 
         # input entries
-        self.website_label = tk.Label(self, text='Website').grid(row=1, column=0, padx=10, sticky='w')
-        self.uname_label = tk.Label(self, text='Username').grid(row=2, column=0, padx=10, sticky='w')
-        self.passw_label = tk.Label(self, text='Password').grid(row=3, column=0, padx=10, sticky='w')
-        self.url_label = tk.Label(self, text='URL (optional)').grid(row=4, column=0, padx=10, sticky='w')
-        
-        self.website_entry = tk.Entry(self, textvariable=self.website).grid(row=1, column=1, padx=(0,20), sticky='ew')
-        self.uname_entry = tk.Entry(self, textvariable=self.username).grid(row=2, column=1, padx=(0,20), sticky='ew')
-        self.passw_entry = tk.Entry(self, textvariable=self.password, show='*').grid(row=3, column=1, padx=(0,20), sticky='ew')
-        self.url_entry = tk.Entry(self, textvariable=self.url).grid(row=4, column=1, padx=(0,20), sticky='ew')
+        self.website_label = tk.Label(self, text='Website').grid(row=2, column=0, padx=10, sticky='w')
+        self.uname_label = tk.Label(self, text='Username').grid(row=3, column=0, padx=10, sticky='w')
+        self.passw_label = tk.Label(self, text='Password').grid(row=4, column=0, padx=10, sticky='w')
+        self.url_label = tk.Label(self, text='URL (optional)').grid(row=5, column=0, padx=10, sticky='w')
+        self.type_label = tk.Label(self, text='Type (optional)').grid(row=6, column=0, padx=10, sticky='w')
 
+        self.website_entry = tk.Entry(self, textvariable=self.website).grid(row=2, column=1, padx=(0,20), sticky='ew')
+        self.uname_entry = tk.Entry(self, textvariable=self.username).grid(row=3, column=1, padx=(0,20), sticky='ew')
+        self.passw_entry = tk.Entry(self, textvariable=self.password, show='*').grid(row=4, column=1, padx=(0,20), sticky='ew')
+        self.url_entry = tk.Entry(self, textvariable=self.url).grid(row=5, column=1, padx=(0,20), sticky='ew')
+        self.type_entry = tk.Entry(self, textvariable=self.type).grid(row=6, column=1, padx=(0,20), sticky='ew')
         # add website/password button
         self.add_btn = tk.Button(
             self, 
             text='Add',
             command=self.on_add
-        ).grid(row=5, column=1, padx=0, pady=10, sticky='w')
+        ).grid(row=7, column=1, padx=0, pady=10, sticky='w')
 
         # import CSV of passwords button
         self.import_btn = tk.Button(
             self, 
             text='Import Passwords',
-            command=self.on_import
-        ).grid(row=6, column=1, padx=0, pady=10, sticky='w')
+            command=self.to_import
+        ).grid(row=8, column=1, padx=0, pady=10, sticky='w')
 
-        # back button
-        self.back_btn = tk.Button(
-            self, 
-            text='Back', 
-            command=self.on_back
-        ).grid(row=7, column=1, padx=0, pady=10, sticky='w')
-        
         # error message
-        self.err_msg = tk.Label(self, text='A password already exists for this website', fg='red')
+        self.exists_err = tk.Label(self, text='A password already exists for this website', fg='red')
+        self.empty_err = tk.Label(self, text='Please fill highlighted sections', fg='red')
+        self.import_err = tk.Label(self, text='Unable to import all passwords from file', fg='red')
 
     # button event triggers
     def on_add(self):
         EventListener.trigger_event('add_password', self)
 
-    def on_import(self):
-        EventListener.trigger_event('on_import', self)
+    def to_import(self):
+        EventListener.trigger_event('to_import', self)
 
     def on_back(self):
         EventListener.trigger_event('on_back', self)
@@ -353,8 +358,15 @@ class ChangeView(tk.Frame):
         self.grid_columnconfigure(0, weight=0)
         self.grid_columnconfigure(1, weight=1)
 
+        left_arrow = "\u2190"
+
+        self.back_btn = tk.Button(
+            self, 
+            text=left_arrow + '  Back',
+            command=self.on_back).grid(row=0, column=0, sticky='w', padx=10, pady=20)
+        
         # header
-        self.header = tk.Label(self, text='Change Password').grid(row=0, column=0, columnspan=2, padx=10, pady=10)
+        self.header = tk.Label(self, text='Change Password').grid(row=1, column=0, columnspan=2, padx=10, pady=10)
         
         # input variables
         self.old_password = tk.StringVar()
@@ -362,27 +374,20 @@ class ChangeView(tk.Frame):
         self.confirm_password = tk.StringVar()
 
         # input entries
-        self.old_password_label = tk.Label(self, text='Previous Password').grid(row=1, column=0, padx=10, sticky='w')
-        self.new_password_label = tk.Label(self, text='New Password').grid(row=2, column=0, padx=10, sticky='w')
-        self.confirm_password_label = tk.Label(self, text='Confirm Password').grid(row=3, column=0, padx=10, sticky='w')
+        self.old_password_label = tk.Label(self, text='Previous Password').grid(row=2, column=0, padx=10, sticky='w')
+        self.new_password_label = tk.Label(self, text='New Password').grid(row=3, column=0, padx=10, sticky='w')
+        self.confirm_password_label = tk.Label(self, text='Confirm Password').grid(row=4, column=0, padx=10, sticky='w')
         
-        self.website_entry = tk.Entry(self, textvariable=self.old_password, show='*').grid(row=1, column=1, padx=(0,20), sticky='ew')
-        self.uname_entry = tk.Entry(self, textvariable=self.new_password, show='*').grid(row=2, column=1, padx=(0,20), sticky='ew')
-        self.passw_entry = tk.Entry(self, textvariable=self.confirm_password, show='*').grid(row=3, column=1, padx=(0,20), sticky='ew')
+        self.website_entry = tk.Entry(self, textvariable=self.old_password, show='*').grid(row=2, column=1, padx=(0,20), sticky='ew')
+        self.uname_entry = tk.Entry(self, textvariable=self.new_password, show='*').grid(row=3, column=1, padx=(0,20), sticky='ew')
+        self.passw_entry = tk.Entry(self, textvariable=self.confirm_password, show='*').grid(row=4, column=1, padx=(0,20), sticky='ew')
 
         # confirm change button
         self.confirm_btn = tk.Button(
             self, 
             text='Confirm',
             command=self.on_change
-        ).grid(row=4, column=1, padx=0, pady=10, sticky='w')
-
-        # back button
-        self.back_btn = tk.Button(
-            self, 
-            text='Back', 
-            command=self.on_back
-        ).grid(row=6, column=1, padx=0, pady=10, sticky='w')
+        ).grid(row=5, column=0, columnspan=2, padx=10, pady=10)
 
         # error messages
         self.incorrect_err_msg = tk.Label(self, text='Previous password incorrect', fg='red')
@@ -394,3 +399,56 @@ class ChangeView(tk.Frame):
 
     def on_back(self):
         EventListener.trigger_event('on_back', self)
+
+class ImportView(tk.Frame):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure(2, weight=1)
+        self.grid_columnconfigure(3, weight=1)
+        self.grid_columnconfigure(4, weight=1)
+        
+        left_arrow = "\u2190"
+
+        self.back_btn = tk.Button(
+            self, 
+            text=left_arrow + '  Back',
+            command=self.on_back).grid(row=0, column=0, sticky='w', padx=10, pady=20)
+        
+        self.header = tk.Label(self, text="Import Passwords").grid(row=1, column=1, columnspan=3, sticky='nsew', pady=20)
+
+        self.path = tk.StringVar()
+
+        self.path_entry = tk.Entry(self, textvariable=self.path).grid(row=2, column=1, columnspan=3, sticky='nsew', pady=10)
+        self.select_path_btn = tk.Button(
+            self, 
+            text='Upload',
+            command=self.select_path,
+            height=1,
+            width=1).grid(row=2, column=4, padx=20, sticky='nsew')
+        
+        self.import_btn = tk.Button(
+            self, 
+            text='Import',
+            command=self.on_import,
+        ).grid(row=3, column=2, sticky='nsew', pady=10)
+
+        self.about_btn = tk.Button(
+            self,
+            text='About',
+            command=self.on_about
+        ).grid(row=4, column=2, sticky='nsew', pady=10)
+
+    def on_back(self):
+        EventListener.trigger_event('on_back', self)
+
+    def select_path(self):
+        EventListener.trigger_event('select_path', self)
+
+    def on_import(self):
+        EventListener.trigger_event('on_import', self)
+
+    def on_about(self):
+        EventListener.trigger_event('on_about', self)

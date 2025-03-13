@@ -13,7 +13,6 @@ class Controller:
         self.frame = None
         self.prev_frame = None
         self.website = None
-        self.stored_passwords = False
 
         # initializing controllers
         self.signup_controller = SignupController(model, view)
@@ -32,7 +31,10 @@ class Controller:
         EventListener.add_listener('open_url', self.open_url)
         EventListener.add_listener('to_add', self.to_add)
         EventListener.add_listener('add_password', self.add_password)
+        EventListener.add_listener('to_import', self.to_import)
         EventListener.add_listener('on_import', self.on_import)
+        EventListener.add_listener('select_path', self.select_path)
+        EventListener.add_listener('on_about', self.on_about)
         EventListener.add_listener('to_change', self.to_change)
         EventListener.add_listener('on_change', self.on_change)
         EventListener.add_listener('on_remove', self.on_remove)
@@ -55,8 +57,8 @@ class Controller:
 
     def on_login(self, frame):
         # triggered when user attempts to login
-        self.frame, self.stored_passwords = self.login_controller.login(frame)
-        if self.stored_passwords is False:
+        self.frame, passwords_available = self.login_controller.login(frame)
+        if passwords_available is False:
             pass
         else:
             try:
@@ -79,8 +81,8 @@ class Controller:
     
     def on_signup(self, frame):
         # triggered when user hits signup button on signup view
-        self.frame, self.stored_passwords = self.signup_controller.signup(frame)
-        if self.stored_passwords is False:
+        self.frame, passwords_available = self.signup_controller.signup(frame)
+        if passwords_available is False:
             pass
         else:
             try:
@@ -116,13 +118,13 @@ class Controller:
     def to_add(self, frame):
         # triggered when add password button is hit on home view
         self.frame = self.home_controller.add(frame)
-        self.prev_frame = 'home'
+        self.prev_frame = 'home_to_add'
 
     def add_password(self, frame):
         # triggered when add button hit on add view
-        self.frame, self.stored_passwords = self.add_controller.add(frame)
-        self.prev_frame = 'home'
-        if self.stored_passwords is False:
+        self.frame, passwords_available = self.add_controller.add(frame)
+        self.prev_frame = 'home_to_add'
+        if passwords_available is False:
             pass
         else:
             try:
@@ -130,25 +132,32 @@ class Controller:
             except KeyError:
                 pass
 
-    def on_import(self, frame):
+    def to_import(self, frame):
         # triggered when import passwords button hit on add view
-        self.frame, self.stored_passwords = self.add_controller.import_passwords(frame)
-        if self.stored_passwords is False:
-            try:
-                self._unbind(self.frame)
-            except KeyError:
-                pass
+        self.frame = self.add_controller.to_import(frame)
+        self.prev_frame = 'add'
+        
+    def on_import(self, frame):
+        self.frame, passwords_available = self.add_controller.import_passwords(frame)
+        self.prev_frame = None
+        if passwords_available is False:
+            pass
         else:
             try:
                 self._bind(self.frame)
-                self.prev_frame = None
             except KeyError:
                 pass
+
+    def select_path(self, frame):
+        self.frame = self.add_controller.select_path(frame)
+
+    def on_about(self, frame):
+        self.frame = self.add_controller.about_import(frame)
 
     def to_change(self, frame):
         # triggered when change password option selected from popup menu
         self.frame, self.website = self.home_controller.change(frame)
-        self.prev_frame = 'home'
+        self.prev_frame = 'home_to_change'
 
     def on_change(self, frame):
         # triggered when confirm button hit on change view
@@ -162,8 +171,8 @@ class Controller:
 
     def on_remove(self, frame):
         # triggered when remove password option selected from popup menu
-        self.frame, self.stored_passwords = self.home_controller.remove(frame)
-        if self.stored_passwords is False:
+        self.frame, passwords_available = self.home_controller.remove(frame)
+        if passwords_available is False:
             try:
                 self._unbind(self.frame)
             except KeyError:
@@ -176,9 +185,10 @@ class Controller:
 
     def on_back(self, frame):
         # triggered when any back buttons are hit
-        if self.prev_frame == 'home':
-            self.frame, self.stored_passwords = self.add_controller.back(frame)
-            if self.stored_passwords is False:
+        if self.prev_frame == 'home_to_add':
+            self.frame, passwords_available = self.add_controller.back_home(frame)
+            self.prev_frame = None
+            if passwords_available is False:
                 try:
                     self._unbind(self.frame)
                 except KeyError:
@@ -188,12 +198,21 @@ class Controller:
                     self._bind(self.frame)
                 except KeyError:
                     pass
+        elif self.prev_frame == 'home_to_change':
+            self.frame = self.change_controller.back(frame)
+            self.prev_frame = None
+            try:
+                self._bind(self.frame)
+            except KeyError:
+                pass
         elif self.prev_frame == 'login':
             self.frame = self.signup_controller.back(frame)
+            self.prev_frame = None
+        elif self.prev_frame == 'add':
+            self.frame = self.add_controller.back_add(frame)
+            self.prev_frame = 'home_to_add'
         else:
             pass
-
-        self.prev_frame = None
 
     # starting the application
     def start(self):
@@ -410,7 +429,8 @@ class AddController:
         # initializing model and view
         self.model = model
         self.view = view
-     
+        self.file_path = None
+
     def populate(self, frame):
         # getting list of current websites
         websites = self.model.base_model.get_websites()
@@ -421,19 +441,41 @@ class AddController:
     
     def add(self, frame):
         # removing error label if added to view
-        frame.children['!label6'].grid_forget()
+        frame.children['!label7'].grid_forget()
+        frame.children['!label8'].grid_forget()
+        frame.children['!label2'].config(fg='black')
+        frame.children['!label3'].config(fg='black')
+        frame.children['!label4'].config(fg='black')
         # getting form entries
+        website = frame.website.get()
         username = frame.username.get()
         password = frame.password.get()
-        website = frame.website.get()
         url = frame.url.get()
+        # form entries completed flag
+        complete_form = True
 
+        # ensuring required form entries are full
+        if len(website) == 0:
+            frame.children['!label8'].grid(row=9, column=1, padx=0, pady=10, sticky='w')
+            frame.children['!label2'].config(fg='red')
+            complete_form = False
+        if len(username) == 0:
+            frame.children['!label8'].grid(row=9, column=1, padx=0, pady=10, sticky='w')
+            frame.children['!label3'].config(fg='red')
+            complete_form = False
+        if len(password) == 0:
+            frame.children['!label8'].grid(row=9, column=1, padx=0, pady=10, sticky='w')
+            frame.children['!label4'].config(fg='red')
+            complete_form = False
+        if complete_form is False:
+            return(frame, False)
+        
         # adding password and storing correctly added flag
         password_added = self.model.base_model.add_password(website, username, password, url)
         
         # if password was not added block
         if password_added is False:
-            frame.children['!label6'].pack()
+            frame.children['!label7'].grid(row=9, column=1, padx=0, pady=10, sticky='w')
             return(frame, False)
         # password added block
         else:
@@ -441,6 +483,8 @@ class AddController:
             frame.children['!entry'].delete(0, tk.END)
             frame.children['!entry2'].delete(0, tk.END)
             frame.children['!entry3'].delete(0, tk.END)
+            frame.children['!entry4'].delete(0, tk.END)
+            frame.children['!entry5'].delete(0, tk.END)
 
             # switching to home frame
             new_frame = self.view.switch('home')
@@ -448,9 +492,27 @@ class AddController:
             new_frame = self.populate(new_frame)
             return (new_frame, True)
 
+    def to_import(self, frame):
+        new_frame = self.view.switch('import')
+        return(new_frame)
+    
     def import_passwords(self, frame):
+        if self.file_path is not None:
+            self.model.base_model.import_passwords(self.file_path)
+
+            # switching to home frame
+            new_frame = self.view.switch('home')
+            # populating listbox of websites
+            new_frame = self.populate(new_frame)
+            self.file_path = None
+            frame.children['!entry'].delete(0, tk.END)
+            return (new_frame, True)
+        else:
+            # returning current frame if no file selected
+            return (frame, False)
+
+    def select_path(self, frame):
         # starting file selection popup
-        frame.children['!label6'].grid_forget()
         filename = filedialog.askopenfilename(
             title='Select a file',
             filetypes=(('CSV', "*.csv"),
@@ -459,22 +521,29 @@ class AddController:
 
         if len(filename) > 0:
             # adding passwords from password csv file
-            self.model.base_model.import_passwords(filename)
-
-            # switching to home frame
-            new_frame = self.view.switch('home')
-            # populating listbox of websites
-            new_frame = self.populate(new_frame)
-            return (new_frame, True)
-        else:
-            # returning current frame if no file selected
-            return (frame, False)
+            frame.children['!entry'].insert(0, filename)
+            self.file_path = filename
+        return frame
     
-    def back(self, frame):
+    def about_import(self, frame):
+        # starting import file information popup message
+        message = """PassProtect import files must be in CSV format and contain the following case sensitive column names:\n 
+        Username: Username associated with the password\n
+        Password: Password to be managed\n
+        Name: The name/nickname for the password source\n
+        Website: (optionl) URL associated with password\n
+        Type: (optional) type of institution\n"""
+
+        messagebox.showinfo(title='About Import File', message=message)
+        return frame
+    
+    def back_home(self, frame):
         # clearing form entries
         frame.children['!entry'].delete(0, tk.END)
         frame.children['!entry2'].delete(0, tk.END)
         frame.children['!entry3'].delete(0, tk.END)
+        frame.children['!entry4'].delete(0, tk.END)
+        frame.children['!entry5'].delete(0, tk.END)
 
         # switching to home view
         new_frame = self.view.switch('home')
@@ -488,7 +557,12 @@ class AddController:
             return (new_frame, True)
         else:
             return(new_frame, False)
-    
+
+    def back_add(self, frame):
+        self.file_path = None
+        new_frame = self.view.switch('add')
+        return new_frame
+        
 # controller for change password
 class ChangeController:
     def __init__(self, model, view):
